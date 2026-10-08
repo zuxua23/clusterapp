@@ -28,7 +28,13 @@ const SEMUA_RT: RT[] = ['RT_01', 'RT_02', 'RT_03', 'RT_04'];
 /** Pengaduan RT yang belum ditanggapi (masih MENUNGGU) setelah sekian hari diteruskan ke RW. */
 const HARI_BATAS_TANGGAPAN = 7;
 
-const PELAPOR_SELECT = { id: true, namaUser: true, email: true, username: true, area: true };
+const PELAPOR_SELECT = {
+  id: true,
+  namaUser: true,
+  email: true,
+  username: true,
+  area: true,
+};
 
 @Injectable()
 export class PengaduanService implements OnApplicationBootstrap {
@@ -44,7 +50,10 @@ export class PengaduanService implements OnApplicationBootstrap {
   /** Job jalan sekali juga saat start, supaya keterlambatan (backend sempat mati) terkejar. */
   onApplicationBootstrap() {
     this.teruskanOtomatis().catch((err) =>
-      this.logger.error('Gagal menjalankan auto-teruskan pengaduan saat start', err),
+      this.logger.error(
+        'Gagal menjalankan auto-teruskan pengaduan saat start',
+        err,
+      ),
     );
   }
 
@@ -62,7 +71,11 @@ export class PengaduanService implements OnApplicationBootstrap {
     if (area === null) return {};
     if (area === 'RW') {
       return {
-        OR: [{ tujuan: 'RW' }, { diteruskanAt: { not: null } }, { idUser: ctx.user.sub }],
+        OR: [
+          { tujuan: 'RW' },
+          { diteruskanAt: { not: null } },
+          { idUser: ctx.user.sub },
+        ],
       };
     }
     return { OR: [{ tujuan: area }, { idUser: ctx.user.sub }] };
@@ -72,11 +85,16 @@ export class PengaduanService implements OnApplicationBootstrap {
    * Daftar tujuan yang boleh dipilih pelapor ini, dipakai sama-sama oleh `create()` (validasi)
    * dan `GET /pengaduan/tujuan` (isi form) supaya keduanya tidak pernah berbeda aturan.
    */
-  async getTujuanPilihan(user: AuthUser): Promise<{ value: Area; label: string }[]> {
+  async getTujuanPilihan(
+    user: AuthUser,
+  ): Promise<{ value: Area; label: string }[]> {
     const [scopeRw, scopeRt, roleInfo, rumahList] = await Promise.all([
       this.permissions.scopeOf(user.roleId, 'pengaduan.create_rw'),
       this.permissions.scopeOf(user.roleId, 'pengaduan.create_rt'),
-      this.prisma.role.findUnique({ where: { id: user.roleId }, select: { level: true } }),
+      this.prisma.role.findUnique({
+        where: { id: user.roleId },
+        select: { level: true },
+      }),
       this.prisma.rumah.findMany({
         where: { userId: user.sub, isDelete: false },
         select: { rt: true },
@@ -95,7 +113,8 @@ export class PengaduanService implements OnApplicationBootstrap {
     if (scopeRw) pilihan.push({ value: 'RW', label: 'RW' });
     if (scopeRt) {
       for (const rt of SEMUA_RT) {
-        if (rtDipunya.has(rt)) pilihan.push({ value: rt, label: rt.replace('_', ' ') });
+        if (rtDipunya.has(rt))
+          pilihan.push({ value: rt, label: rt.replace('_', ' ') });
       }
     }
     return pilihan;
@@ -104,7 +123,11 @@ export class PengaduanService implements OnApplicationBootstrap {
   // Sengaja tanpa AccessContext (butuh @RequirePermission tunggal): pemegang
   // `pengaduan.create_rw` ATAU `pengaduan.create_rt` boleh masuk, jadi izinnya dicek di
   // sini lewat getTujuanPilihan (kosong = tidak punya keduanya = tujuan apa pun ditolak).
-  async create(user: AuthUser, dto: CreatePengaduanDto, file?: Express.Multer.File) {
+  async create(
+    user: AuthUser,
+    dto: CreatePengaduanDto,
+    file?: Express.Multer.File,
+  ) {
     const pilihan = await this.getTujuanPilihan(user);
     if (!pilihan.some((p) => p.value === dto.tujuan)) {
       throw new ForbiddenException(
@@ -113,7 +136,9 @@ export class PengaduanService implements OnApplicationBootstrap {
     }
 
     // Tampil lewat <img>, yang tidak bisa mengirim token; sama seperti sebelumnya (folder statis).
-    const fotoUrl = file ? await this.files.simpan(file, { publik: true }) : undefined;
+    const fotoUrl = file
+      ? await this.files.simpan(file, { publik: true })
+      : undefined;
     const data = await this.prisma.pengaduan.create({
       data: {
         idUser: user.sub,
@@ -154,7 +179,9 @@ export class PengaduanService implements OnApplicationBootstrap {
   async findByUser(ctx: AccessContext, userId: number) {
     if (ctx.scope === 'OWN') {
       if (userId !== ctx.user.sub) {
-        throw new ForbiddenException('Anda tidak berhak melihat pengaduan warga lain');
+        throw new ForbiddenException(
+          'Anda tidak berhak melihat pengaduan warga lain',
+        );
       }
     } else if (userId !== ctx.user.sub) {
       const target = await this.prisma.user.findUnique({
@@ -185,7 +212,9 @@ export class PengaduanService implements OnApplicationBootstrap {
     const existing = await this.findOne(ctx, id);
 
     if (existing.idUser === ctx.user.sub) {
-      throw new ForbiddenException('Anda tidak bisa menanggapi pengaduan milik sendiri.');
+      throw new ForbiddenException(
+        'Anda tidak bisa menanggapi pengaduan milik sendiri.',
+      );
     }
     if (existing.status === 'SELESAI' || existing.status === 'DITOLAK') {
       throw new ForbiddenException(
@@ -269,6 +298,8 @@ export class PengaduanService implements OnApplicationBootstrap {
       );
     }
 
-    this.logger.log(`Auto-teruskan: ${jatuhTempo.length} pengaduan diteruskan ke RW.`);
+    this.logger.log(
+      `Auto-teruskan: ${jatuhTempo.length} pengaduan diteruskan ke RW.`,
+    );
   }
 }

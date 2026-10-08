@@ -3,7 +3,10 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
-import { PesanIndonesiaFilter, validasiIndonesia } from './common/pesan-indonesia';
+import {
+  PesanIndonesiaFilter,
+  validasiIndonesia,
+} from './common/pesan-indonesia';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -76,4 +79,4 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 4000, '0.0.0.0');
 }
-bootstrap();
+void bootstrap();

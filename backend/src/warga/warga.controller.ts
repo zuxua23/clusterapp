@@ -84,7 +84,10 @@ export class WargaController {
 
   @Delete('rumah/:id')
   @RequirePermission('rumah', 'delete')
-  removeRumah(@Access() ctx: AccessContext, @Param('id', ParseIntPipe) id: number) {
+  removeRumah(
+    @Access() ctx: AccessContext,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
     return this.wargaService.removeRumah(ctx, id);
   }
 
@@ -95,7 +98,10 @@ export class WargaController {
   /** GET /warga/portal/rumah/:userId — daftar rumah milik user */
   @Get('portal/rumah/:userId')
   @RequirePermission('ipl', 'read')
-  getRumahByUser(@Access() ctx: AccessContext, @Param('userId', ParseIntPipe) userId: number) {
+  getRumahByUser(
+    @Access() ctx: AccessContext,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
     return this.wargaService.getRumahByUser(ctx, userId);
   }
 
@@ -125,7 +131,10 @@ export class WargaController {
   /** GET /warga/portal/tagihan/:rumahId — tagihan IPL per rumah */
   @Get('portal/tagihan/:rumahId')
   @RequirePermission('ipl', 'read')
-  getTagihanByRumah(@Access() ctx: AccessContext, @Param('rumahId', ParseIntPipe) rumahId: number) {
+  getTagihanByRumah(
+    @Access() ctx: AccessContext,
+    @Param('rumahId', ParseIntPipe) rumahId: number,
+  ) {
     return this.wargaService.getTagihanByRumah(ctx, rumahId);
   }
 
@@ -168,7 +177,10 @@ export class WargaController {
   /** Daftar pendaftaran mandiri yang menunggu persetujuan di area pengurus ini. */
   @Get('pendaftaran')
   @RequirePermission('warga', 'approve_registrasi')
-  getPendaftaran(@Access() ctx: AccessContext, @Query('status') status?: string) {
+  getPendaftaran(
+    @Access() ctx: AccessContext,
+    @Query('status') status?: string,
+  ) {
     return this.wargaService.getPendaftaran(ctx, status);
   }
 
@@ -220,7 +232,10 @@ export class WargaController {
   /** Pengurus RT membuatkan password sementara untuk warga yang lupa password. */
   @Post(':id/reset-password')
   @RequirePermission('warga', 'reset_password')
-  resetPassword(@Access() ctx: AccessContext, @Param('id', ParseIntPipe) id: number) {
+  resetPassword(
+    @Access() ctx: AccessContext,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
     return this.wargaService.resetPassword(ctx, id);
   }
 }

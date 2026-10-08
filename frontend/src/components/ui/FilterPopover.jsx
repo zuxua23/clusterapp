@@ -38,16 +38,23 @@ export default function FilterPopover({
   // Pemakaian lama tanpa prop baru tetap berperilaku sama persis.
   const open = controlledOpen ?? internalOpen;
 
-  // Simpan nilai terbaru di ref agar setOpen tidak perlu open sebagai dependency,
-  // sehingga ukuran deps array useEffect selalu konstan.
+  // Simpan nilai terbaru di ref (disinkronkan lewat effect, bukan saat render)
+  // agar setOpen tidak perlu open sebagai dependency, sehingga ukuran deps
+  // array useEffect selalu konstan.
   const openRef = useRef(open);
-  openRef.current = open;
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
 
   const controlledOpenRef = useRef(controlledOpen);
-  controlledOpenRef.current = controlledOpen;
+  useEffect(() => {
+    controlledOpenRef.current = controlledOpen;
+  }, [controlledOpen]);
 
   const onOpenChangeRef = useRef(onOpenChange);
-  onOpenChangeRef.current = onOpenChange;
+  useEffect(() => {
+    onOpenChangeRef.current = onOpenChange;
+  }, [onOpenChange]);
 
   const setOpen = useCallback((value) => {
     const next = typeof value === "function" ? value(openRef.current) : value;

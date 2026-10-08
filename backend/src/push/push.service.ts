@@ -20,7 +20,9 @@ export class PushService {
     if (publicKey && privateKey && subject) {
       webpush.setVapidDetails(subject, publicKey, privateKey);
     } else {
-      this.logger.warn('VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY/VAPID_SUBJECT belum di-set — push notification nonaktif.');
+      this.logger.warn(
+        'VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY/VAPID_SUBJECT belum di-set — push notification nonaktif.',
+      );
     }
   }
 
@@ -48,7 +50,9 @@ export class PushService {
   }
 
   async unsubscribe(idUser: number, endpoint: string) {
-    await this.prisma.pushSubscription.deleteMany({ where: { idUser, endpoint } });
+    await this.prisma.pushSubscription.deleteMany({
+      where: { idUser, endpoint },
+    });
     return { message: 'Notifikasi push dimatikan.' };
   }
 
@@ -67,7 +71,11 @@ export class PushService {
     });
     if (subs.length === 0) return;
 
-    const body = JSON.stringify({ title: payload.title, body: payload.body, url: payload.url ?? '/' });
+    const body = JSON.stringify({
+      title: payload.title,
+      body: payload.body,
+      url: payload.url ?? '/',
+    });
 
     await Promise.allSettled(
       subs.map(async (sub) => {
@@ -79,12 +87,18 @@ export class PushService {
             },
             body,
           );
-        } catch (err: any) {
+        } catch (err) {
           // 404/410 = subscription sudah tidak valid (user uninstall/clear data/dll) — bersihkan.
-          if (err?.statusCode === 404 || err?.statusCode === 410) {
-            await this.prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => undefined);
+          const statusCode =
+            err instanceof webpush.WebPushError ? err.statusCode : undefined;
+          if (statusCode === 404 || statusCode === 410) {
+            await this.prisma.pushSubscription
+              .delete({ where: { id: sub.id } })
+              .catch(() => undefined);
           } else {
-            this.logger.warn(`Gagal kirim push ke subscription ${sub.id}: ${err?.message ?? err}`);
+            this.logger.warn(
+              `Gagal kirim push ke subscription ${sub.id}: ${err instanceof Error ? err.message : String(err)}`,
+            );
           }
         }
       }),

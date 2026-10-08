@@ -20,10 +20,10 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(
-      IS_PUBLIC_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
     if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest<AuthedRequest>();
@@ -37,7 +37,9 @@ export class JwtAuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync<{ sub: number }>(token);
       sub = payload.sub;
     } catch {
-      throw new UnauthorizedException('Token tidak valid atau sudah kedaluwarsa.');
+      throw new UnauthorizedException(
+        'Token tidak valid atau sudah kedaluwarsa.',
+      );
     }
 
     // Role dan area dibaca dari DB tiap request, bukan dari token, supaya

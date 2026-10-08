@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Reveal from "./Reveal";
 import { PhotoIcon } from "./icons";
 import { fileUrl } from "@/lib/api";
@@ -23,12 +23,12 @@ export default function Kegiatan({ items = [] }) {
   // Clone 3 item pertama untuk infinite loop
   const extendedItems = isSliderActive ? [...items, ...items.slice(0, 3)] : items;
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (!isSliderActive) return;
     if (currentIndex >= items.length) return;
     setIsTransitioning(true);
     setCurrentIndex((prev) => prev + 1);
-  };
+  }, [isSliderActive, currentIndex, items.length]);
 
   const handlePrev = () => {
     if (!isSliderActive) return;
@@ -58,7 +58,7 @@ export default function Kegiatan({ items = [] }) {
       handleNext();
     }, 3000);
     return () => clearInterval(timer);
-  }, [isSliderActive, currentIndex]);
+  }, [isSliderActive, currentIndex, handleNext]);
 
   return (
     <section id="kegiatan" className="lp-section" style={{ background: "white" }}>

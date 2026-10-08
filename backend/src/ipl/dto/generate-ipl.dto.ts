@@ -1,14 +1,26 @@
-import { IsString, IsInt, IsPositive, IsOptional, IsEnum, Matches, Min } from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  IsPositive,
+  IsOptional,
+  IsEnum,
+  Matches,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { RT } from '@prisma/client';
 
 export class GenerateIplDto {
   @IsString()
-  @Matches(/^(0[1-9]|1[0-2])$/, { message: 'bulanPeriode harus format "01"-"12"' })
+  @Matches(/^(0[1-9]|1[0-2])$/, {
+    message: 'bulanPeriode harus format "01"-"12"',
+  })
   bulanPeriode: string;
 
   @IsString()
-  @Matches(/^\d{4}$/, { message: 'tahunPeriode harus format 4 digit, contoh "2026"' })
+  @Matches(/^\d{4}$/, {
+    message: 'tahunPeriode harus format 4 digit, contoh "2026"',
+  })
   tahunPeriode: string;
 
   /** Porsi IPL yang nanti disetor RT ke RW. */

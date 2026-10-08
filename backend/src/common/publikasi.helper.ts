@@ -35,7 +35,9 @@ export const tampilKeSemua = {
 
 /** Batas tampil di dashboard warga: tanpa batas, atau belum lewat. */
 export function belumLewatBatasTampil() {
-  return { OR: [{ tampilSampai: null }, { tampilSampai: { gte: new Date() } }] };
+  return {
+    OR: [{ tampilSampai: null }, { tampilSampai: { gte: new Date() } }],
+  };
 }
 
 /**

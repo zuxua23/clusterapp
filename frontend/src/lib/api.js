@@ -24,7 +24,21 @@ async function request(path, options = {}) {
     : null;
 
   if (!response.ok) {
-    if (response.status === 401) clearSession();
+    if (response.status === 401) {
+      clearSession();
+      // Sesi habis (idle timeout/token kedaluwarsa) biasa ketahuan bukan dari interaksi
+      // user, tapi dari polling di background (lonceng notifikasi, dll) — kalau cuma
+      // dibersihkan tanpa diarahkan ke login, halaman jadi "zombie": kelihatan biasa
+      // tapi semua data berhenti muncul tanpa penjelasan. Alihkan paksa dari sini (bukan
+      // cuma di guard komponen) supaya kejadian ini tertangani di mana pun munculnya,
+      // kecuali kalau memang lagi di halaman publik/login (401 di situ = salah kata sandi,
+      // bukan sesi habis).
+      if (typeof window !== "undefined") {
+        const { pathname } = window.location;
+        const diluarArea = pathname.startsWith("/dashboard") || pathname.startsWith("/portal");
+        if (diluarArea) window.location.href = "/login";
+      }
+    }
     const message = body?.message || "Terjadi kesalahan pada server.";
     throw new Error(Array.isArray(message) ? message.join(", ") : message);
   }

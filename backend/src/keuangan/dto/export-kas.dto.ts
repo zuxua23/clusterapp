@@ -1,11 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  IsIn,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Matches,
-} from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsString, Matches } from 'class-validator';
 
 const YM = /^\d{4}-(0[1-9]|1[0-2])$/;
 

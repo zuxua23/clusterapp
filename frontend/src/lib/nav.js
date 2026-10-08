@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   Users,
   Wallet,
-  Landmark,
   ReceiptText,
   CalendarDays,
   Megaphone,

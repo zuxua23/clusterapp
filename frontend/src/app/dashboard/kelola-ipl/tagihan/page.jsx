@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   Eye,
   Wallet,
-  TrendingUp,
   FileX,
   Home,
   Upload,

@@ -11,9 +11,12 @@ import {
 import { Transform, Type } from 'class-transformer';
 import { Area, StatusKegiatan } from '@prisma/client';
 
-const kosongJadiUndefined = ({ value }: { value: unknown }) => (value === '' ? undefined : value);
+const kosongJadiUndefined = ({ value }: { value: unknown }) =>
+  value === '' ? undefined : value;
 const keBoolean = ({ value }: { value: unknown }) =>
-  value === '' || value === undefined ? undefined : value === true || value === 'true';
+  value === '' || value === undefined
+    ? undefined
+    : value === true || value === 'true';
 
 export class CreateKegiatanDto {
   @IsString()

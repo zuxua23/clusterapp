@@ -58,7 +58,9 @@ export class KegiatanController {
   @Public()
   @Get('active')
   findActive(@Query('scope') scope?: string) {
-    return this.kegiatanService.findActive(scope as 'aktif' | 'arsip' | undefined);
+    return this.kegiatanService.findActive(
+      scope as 'aktif' | 'arsip' | undefined,
+    );
   }
 
   /** Portofolio 5 tahun untuk landing page, per tahun. */

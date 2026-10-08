@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { showConfirm } from "@/lib/message";
 import { wargaApi } from "@/lib/api";
 import { areaLabel } from "@/lib/session";
+import { sanitizePhoneInput } from "@/lib/validators";
 import AuthShell from "@/components/auth/AuthShell";
 import RegisterStepper from "@/components/auth/RegisterStepper";
 import Select from "@/components/ui/Select";
@@ -37,16 +38,13 @@ export default function DataDiriPage() {
       .catch(() => { if (!cancelled) setRumahKosong([]); })
       .finally(() => { if (!cancelled) setLoadingRumah(false); });
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.rt]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
 
     if (name === "noTelp") {
-      const numericValue = value.replace(/\D/g, "");
-      if (numericValue.length > 13) return;
-      setFormData((prev) => ({ ...prev, [name]: numericValue }));
+      setFormData((prev) => ({ ...prev, [name]: sanitizePhoneInput(value) }));
       return;
     }
 

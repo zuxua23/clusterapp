@@ -12,13 +12,17 @@ export class PermissionsService {
   // Cache dibuang tiap admin mengubah matriks lewat aplikasi, dan kedaluwarsa sendiri
   // setelah TTL supaya perubahan langsung di database (mis. lewat SQL) ikut terbaca.
   private static readonly TTL_MS = 30_000;
-  private cache = new Map<number, { at: number; grants: Map<string, ScopeAkses> }>();
+  private cache = new Map<
+    number,
+    { at: number; grants: Map<string, ScopeAkses> }
+  >();
 
   constructor(private prisma: PrismaService) {}
 
   async forRole(roleId: number): Promise<Map<string, ScopeAkses>> {
     const cached = this.cache.get(roleId);
-    if (cached && Date.now() - cached.at < PermissionsService.TTL_MS) return cached.grants;
+    if (cached && Date.now() - cached.at < PermissionsService.TTL_MS)
+      return cached.grants;
 
     const rows = await this.prisma.rolePermission.findMany({
       where: { roleId },

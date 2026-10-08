@@ -1,8 +1,16 @@
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { Area, StatusPengumuman } from '@prisma/client';
 
-const kosongJadiUndefined = ({ value }: { value: unknown }) => (value === '' ? undefined : value);
+const kosongJadiUndefined = ({ value }: { value: unknown }) =>
+  value === '' ? undefined : value;
 
 export class CreatePengumumanDto {
   @IsString()

@@ -2,7 +2,7 @@
 // terdaftar) + penerima Web Push. Tidak melakukan caching agresif — data di app ini
 // selalu berubah (tagihan, pengaduan, dll), jadi tidak di-cache offline.
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 

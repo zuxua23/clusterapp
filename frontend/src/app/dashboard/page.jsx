@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Users, Wallet, AlertTriangle, CheckCircle,
-  TrendingUp, Clock, ArrowRight, Home, CreditCard, Megaphone, CalendarDays,
+  TrendingUp, Clock, ArrowRight, Home, Megaphone, CalendarDays,
   Calendar, FileText, ChevronDown, Check,
 } from "lucide-react";
 import { iplApi, portalApi, kegiatanApi, pengumumanApi } from "@/lib/api";

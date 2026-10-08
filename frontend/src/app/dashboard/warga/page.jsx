@@ -10,9 +10,7 @@ import {
   Search,
   PhoneCall,
   KeyRound,
-  UserCheck,
 } from "lucide-react";
-import Swal from "sweetalert2";
 import { wargaApi } from "@/lib/api";
 import { areaLabel, can, scopeOf } from "@/lib/session";
 import { useUser } from "@/lib/useUser";
@@ -22,7 +20,6 @@ import { waLink } from "@/lib/format";
 import Pagination from "@/components/ui/Pagination";
 import Select from "@/components/ui/Select";
 import { usePagination } from "@/lib/usePagination";
-import RumahFormModal from "@/components/warga/RumahFormModal";
 import WargaFormModal from "@/components/warga/WargaFormModal";
 
 const ALL_RT = ["RT_01", "RT_02", "RT_03", "RT_04"];
@@ -46,18 +43,14 @@ export default function WargaPage() {
 
   const [search, setSearch] = useState("");
   const [filterRT, setFilterRT] = useState("SEMUA");
-  const [filterStatus, setFilterStatus] = useState("SEMUA");
   const [draftRT, setDraftRT] = useState("SEMUA");
-  const [draftStatus, setDraftStatus] = useState("SEMUA");
 
   const [wargaModal, setWargaModal] = useState({ open: false, mode: "create", data: null });
-  const [rumahModal, setRumahModal] = useState({ open: false, mode: "create", data: null });
 
   const bolehTambah = can(user, "warga.create");
   const bolehUbah = can(user, "warga.update");
   const bolehHapus = can(user, "warga.delete");
   const bolehReset = can(user, "warga.reset_password");
-  const bolehApprove = can(user, "warga.approve_registrasi");
   // Kolom/footer Aksi cuma ditampilin kalau role ini punya salah satu hak tulis;
   // Bendahara dkk yang cuma "read" gak perlu lihat kolom kosong.
   const bisaAksiWarga = bolehUbah || bolehReset || bolehHapus;
@@ -108,20 +101,6 @@ export default function WargaPage() {
         return matchSearch && matchRT;
       }),
     [warga, q, filterRT],
-  );
-
-  const rumahFiltered = useMemo(
-    () =>
-      rumah.filter((r) => {
-        const matchSearch =
-          !q ||
-          r.blokRumah.toLowerCase().includes(q) ||
-          (r.penghuni?.namaUser ?? "").toLowerCase().includes(q);
-        const matchRT = filterRT === "SEMUA" || r.rt === filterRT;
-        const matchStatus = filterStatus === "SEMUA" || r.status === filterStatus;
-        return matchSearch && matchRT && matchStatus;
-      }),
-    [rumah, q, filterRT, filterStatus],
   );
 
   // ── Warga ──────────────────────────────────────────────────────────
@@ -192,43 +171,6 @@ export default function WargaPage() {
       showMessage("Gagal Menghapus", error.message, "error");
     }
   };
-
-  // ── Rumah ──────────────────────────────────────────────────────────
-  const handleSubmitRumah = async (payload) => {
-    try {
-      if (rumahModal.mode === "edit" && rumahModal.data) {
-        await wargaApi.updateRumah(rumahModal.data.id, payload);
-        showMessage("Berhasil", "Data rumah berhasil diperbarui.", "success");
-      } else {
-        await wargaApi.createRumah(payload);
-        showMessage("Berhasil", "Rumah baru berhasil ditambahkan.", "success");
-      }
-      setRumahModal({ open: false, mode: "create", data: null });
-      loadData();
-    } catch (error) {
-      showMessage("Gagal Menyimpan", error.message, "error");
-    }
-  };
-
-  const handleDeleteRumah = async (item) => {
-    const ok = await showConfirm(
-      "Hapus data rumah?",
-      `Rumah ${item.blokRumah} akan dihapus.`,
-      "warning",
-      "Ya, hapus",
-      "Batal",
-    );
-    if (!ok) return;
-    try {
-      await wargaApi.deleteRumah(item.id);
-      showMessage("Berhasil", "Data rumah berhasil dihapus.", "success");
-      loadData();
-    } catch (error) {
-      showMessage("Gagal Menghapus", error.message, "error");
-    }
-  };
-
-  const filterAktif = filterRT !== "SEMUA" || filterStatus !== "SEMUA";
 
   const {
     page: pageWarga,
@@ -473,14 +415,6 @@ export default function WargaPage() {
         rumahKosong={rumahKosong}
         onClose={() => setWargaModal({ open: false, mode: "create", data: null })}
         onSubmit={handleSubmitWarga}
-      />
-      <RumahFormModal
-        open={rumahModal.open}
-        mode={rumahModal.mode}
-        initialData={rumahModal.data}
-        allowedRts={rtTulis}
-        onClose={() => setRumahModal({ open: false, mode: "create", data: null })}
-        onSubmit={handleSubmitRumah}
       />
     </div>
   );

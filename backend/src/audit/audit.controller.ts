@@ -49,7 +49,13 @@ export class AuditController {
     }
     if (search?.trim()) {
       const q = search.trim();
-      and.push({ OR: [{ keterangan: { contains: q } }, { target: { contains: q } }, { aksi: { contains: q } }] });
+      and.push({
+        OR: [
+          { keterangan: { contains: q } },
+          { target: { contains: q } },
+          { aksi: { contains: q } },
+        ],
+      });
     }
 
     const take = Math.min(Math.max(Number(limit) || 100, 1), 500);
@@ -59,15 +65,25 @@ export class AuditController {
       take,
     });
 
-    const ids = [...new Set(rows.map((r) => r.idUser).filter((v): v is number => v !== null))];
+    const ids = [
+      ...new Set(
+        rows.map((r) => r.idUser).filter((v): v is number => v !== null),
+      ),
+    ];
     const users =
       ids.length > 0
-        ? await this.prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, namaUser: true } })
+        ? await this.prisma.user.findMany({
+            where: { id: { in: ids } },
+            select: { id: true, namaUser: true },
+          })
         : [];
     const nama = new Map(users.map((u) => [u.id, u.namaUser]));
 
     return {
-      riwayat: rows.map((r) => ({ ...r, namaUser: r.idUser !== null ? (nama.get(r.idUser) ?? '—') : 'Sistem' })),
+      riwayat: rows.map((r) => ({
+        ...r,
+        namaUser: r.idUser !== null ? (nama.get(r.idUser) ?? '—') : 'Sistem',
+      })),
       aksiTersedia: [...AKSI_AUDIT],
     };
   }

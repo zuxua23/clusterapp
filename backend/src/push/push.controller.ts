@@ -24,7 +24,11 @@ export class PushController {
 
   @Post('subscribe')
   subscribe(@Body() dto: SubscribePushDto, @Req() req: AuthedRequest) {
-    return this.pushService.subscribe(req.user.sub, dto, req.headers['user-agent']);
+    return this.pushService.subscribe(
+      req.user.sub,
+      dto,
+      req.headers['user-agent'],
+    );
   }
 
   @Delete('subscribe')

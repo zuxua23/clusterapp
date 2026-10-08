@@ -1,4 +1,10 @@
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { Transform } from 'class-transformer';
 import { Area } from '@prisma/client';
@@ -19,7 +25,9 @@ export class CreateCatatanRapatDto {
    * (sekre RW -> RW, sekre RT2 -> RT_02). Hanya admin (scope ALL) yang boleh menentukan.
    */
   @IsOptional()
-  @Transform(({ value }) => (value === '' ? undefined : value))
+  @Transform(({ value }: { value: unknown }) =>
+    value === '' ? undefined : value,
+  )
   @IsEnum(Area)
   area?: Area;
 }

@@ -17,7 +17,8 @@ import { Area, ScopeAkses } from '@prisma/client';
 export class CreateRoleDto {
   @IsString()
   @Matches(/^[A-Z][A-Z0-9_]{1,49}$/, {
-    message: 'Kode peran berupa huruf besar/angka/garis bawah, diawali huruf. Contoh: ADMIN_DKM',
+    message:
+      'Kode peran berupa huruf besar/angka/garis bawah, diawali huruf. Contoh: ADMIN_DKM',
   })
   kode!: string;
 
@@ -90,13 +91,14 @@ export class VacatePengurusDto {
 /** Nomor WhatsApp khusus pengurus untuk landing page. Kosong/null = hapus (tidak ditampilkan). */
 export class SetKontakPengurusDto {
   @IsOptional()
-  @Transform(({ value }) => {
+  @Transform(({ value }: { value: unknown }) => {
     if (typeof value !== 'string') return value;
     const bersih = value.replace(/[\s.\-()]/g, '');
     return bersih === '' ? null : bersih;
   })
   @Matches(/^(\+62|62|0)8\d{8,12}$/, {
-    message: 'Nomor kontak harus nomor HP Indonesia, contoh 0812 3456 7890 atau +62 812 3456 7890.',
+    message:
+      'Nomor kontak harus nomor HP Indonesia, contoh 0812 3456 7890 atau +62 812 3456 7890.',
   })
   kontak?: string | null;
 }

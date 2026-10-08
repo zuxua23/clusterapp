@@ -1,4 +1,10 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Area, ScopeAkses, TipeNotifikasi } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -18,7 +24,10 @@ export class NotifikasiService implements OnApplicationBootstrap {
   /** Job pembersih juga jalan sekali saat start, supaya keterlambatan (backend sempat mati) terkejar. */
   onApplicationBootstrap() {
     this.hapusNotifikasiDibaca().catch((err) =>
-      this.logger.error('Gagal menjalankan pembersihan notifikasi saat start', err),
+      this.logger.error(
+        'Gagal menjalankan pembersihan notifikasi saat start',
+        err,
+      ),
     );
   }
 
@@ -30,18 +39,36 @@ export class NotifikasiService implements OnApplicationBootstrap {
     const { count } = await this.prisma.notifikasi.deleteMany({
       where: { isRead: true, readAt: { lte: batas } },
     });
-    if (count > 0) this.logger.log(`Menghapus ${count} notifikasi yang sudah dibaca >1 hari.`);
+    if (count > 0)
+      this.logger.log(
+        `Menghapus ${count} notifikasi yang sudah dibaca >1 hari.`,
+      );
   }
 
   /** Lempar push notification tanpa ditunggu (fire-and-forget) — kalau gagal, cukup
    * di-log, tidak boleh bikin pembuatan notifikasi in-app (pemanggil method ini) ikut gagal. */
-  private kirimPush(idUserList: number[], judul: string, pesan: string, link?: string | null) {
+  private kirimPush(
+    idUserList: number[],
+    judul: string,
+    pesan: string,
+    link?: string | null,
+  ) {
     this.pushService
       .kirimKeBanyak(idUserList, { title: judul, body: pesan, url: link })
-      .catch((err) => this.logger.warn(`Gagal kirim push notification: ${err?.message ?? err}`));
+      .catch((err: unknown) =>
+        this.logger.warn(
+          `Gagal kirim push notification: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
   }
 
-  async kirim(idUser: number, tipe: TipeNotifikasi, judul: string, pesan: string, link?: string) {
+  async kirim(
+    idUser: number,
+    tipe: TipeNotifikasi,
+    judul: string,
+    pesan: string,
+    link?: string,
+  ) {
     const data = await this.prisma.notifikasi.create({
       data: { idUser, tipe, judul, pesan, link },
     });
@@ -95,11 +122,20 @@ export class NotifikasiService implements OnApplicationBootstrap {
         ...(kecualiUserId !== undefined && { id: { not: kecualiUserId } }),
         OR: seluruhRw
           ? [punyaPermission(['ALL', 'AREA', 'OWN'])]
-          : [punyaPermission(['ALL']), { area, ...punyaPermission(['AREA', 'OWN']) }],
+          : [
+              punyaPermission(['ALL']),
+              { area, ...punyaPermission(['AREA', 'OWN']) },
+            ],
       },
       select: { id: true },
     });
-    return this.kirimBanyak(users.map((u) => u.id), tipe, judul, pesan, link);
+    return this.kirimBanyak(
+      users.map((u) => u.id),
+      tipe,
+      judul,
+      pesan,
+      link,
+    );
   }
 
   /**
@@ -126,11 +162,20 @@ export class NotifikasiService implements OnApplicationBootstrap {
     const users = await this.prisma.user.findMany({
       where: {
         ...(kecualiUserId !== undefined && { id: { not: kecualiUserId } }),
-        OR: [punyaPermission(['ALL']), { area, ...punyaPermission(['AREA', 'OWN']) }],
+        OR: [
+          punyaPermission(['ALL']),
+          { area, ...punyaPermission(['AREA', 'OWN']) },
+        ],
       },
       select: { id: true },
     });
-    return this.kirimBanyak(users.map((u) => u.id), tipe, judul, pesan, link);
+    return this.kirimBanyak(
+      users.map((u) => u.id),
+      tipe,
+      judul,
+      pesan,
+      link,
+    );
   }
 
   findByUser(userId: number) {

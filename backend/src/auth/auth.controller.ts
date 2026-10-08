@@ -1,5 +1,11 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
@@ -44,7 +50,11 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @Post('login')
   login(@Body() dto: LoginDto) {
-    return this.authService.login(dto.username ?? dto.email ?? '', dto.password, dto.remember === true);
+    return this.authService.login(
+      dto.username ?? dto.email ?? '',
+      dto.password,
+      dto.remember === true,
+    );
   }
 
   /** Profil + permission user yang sedang login. */
@@ -55,6 +65,10 @@ export class AuthController {
 
   @Post('ganti-password')
   gantiPassword(@CurrentUser() user: AuthUser, @Body() dto: GantiPasswordDto) {
-    return this.authService.gantiPassword(user.sub, dto.passwordLama, dto.passwordBaru);
+    return this.authService.gantiPassword(
+      user.sub,
+      dto.passwordLama,
+      dto.passwordBaru,
+    );
   }
 }

@@ -1,5 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Area, Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Area, Prisma, StatusPengajuan } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateKegiatanDto } from './dto/create-kegiatan.dto';
 import { UpdateKegiatanDto } from './dto/update-kegiatan.dto';
@@ -40,14 +44,21 @@ export class KegiatanService {
 
   /** Apakah user ini berhak menyetujui pengajuan (menentukan boleh atur portofolio & durasi tampil). */
   private async bolehApprove(ctx: AccessContext) {
-    return (await this.permissions.scopeOf(ctx.user.roleId, 'kegiatan.approve')) !== null;
+    return (
+      (await this.permissions.scopeOf(ctx.user.roleId, 'kegiatan.approve')) !==
+      null
+    );
   }
 
   // ================================================================
   // CRUD
   // ================================================================
 
-  async create(ctx: AccessContext, dto: CreateKegiatanDto, file?: Express.Multer.File) {
+  async create(
+    ctx: AccessContext,
+    dto: CreateKegiatanDto,
+    file?: Express.Multer.File,
+  ) {
     if (!file) {
       throw new BadRequestException('Gambar kegiatan wajib diunggah');
     }
@@ -88,10 +99,18 @@ export class KegiatanService {
   }
 
   /** Daftar untuk halaman kelola. Filter opsional: ?pengajuan=DIAJUKAN, ?area=RT_01 (scope ALL). */
-  findAll(ctx: AccessContext, params: { pengajuan?: string; area?: string } = {}) {
-    const and: Prisma.KegiatanWhereInput[] = [{ isDelete: false }, visibilitasKelolaWhere(ctx)];
-    if (params.pengajuan) and.push({ statusPengajuan: params.pengajuan as any });
-    if (params.area && ctx.scope === 'ALL') and.push({ area: params.area as Area });
+  findAll(
+    ctx: AccessContext,
+    params: { pengajuan?: string; area?: string } = {},
+  ) {
+    const and: Prisma.KegiatanWhereInput[] = [
+      { isDelete: false },
+      visibilitasKelolaWhere(ctx),
+    ];
+    if (params.pengajuan)
+      and.push({ statusPengajuan: params.pengajuan as StatusPengajuan });
+    if (params.area && ctx.scope === 'ALL')
+      and.push({ area: params.area as Area });
     return this.prisma.kegiatan.findMany({
       where: { AND: and },
       orderBy: { tanggalAcara: 'desc' },
@@ -119,7 +138,11 @@ export class KegiatanService {
     today.setHours(0, 0, 0, 0);
     if (scope === 'arsip') {
       return this.prisma.kegiatan.findMany({
-        where: { isDelete: false, ...tampilKeSemua, tanggalAcara: { lt: today } },
+        where: {
+          isDelete: false,
+          ...tampilKeSemua,
+          tanggalAcara: { lt: today },
+        },
         orderBy: { tanggalAcara: 'desc' },
         take: 5,
         select: RINGKAS,
@@ -127,7 +150,12 @@ export class KegiatanService {
     }
     // default aktif: akan datang/berlangsung (tanggalAcara >= hari ini) + status active
     return this.prisma.kegiatan.findMany({
-      where: { isDelete: false, status: 'active', ...tampilKeSemua, tanggalAcara: { gte: today } },
+      where: {
+        isDelete: false,
+        status: 'active',
+        ...tampilKeSemua,
+        tanggalAcara: { gte: today },
+      },
       orderBy: { tanggalAcara: 'asc' },
       take: 5,
       select: RINGKAS,
@@ -136,7 +164,6 @@ export class KegiatanService {
 
   /** Publik (landing): portofolio cluster 5 tahun ke belakang s/d 5 tahun ke depan, dikelompokkan per tahun. */
   async portofolio() {
-    const sekarang = new Date();
     const mulai = new Date();
     mulai.setFullYear(mulai.getFullYear() - 5);
     const batas = new Date();
@@ -178,7 +205,9 @@ export class KegiatanService {
 
   /** Ambil untuk diubah/dihapus: harus di dalam wilayah tulis user. */
   private async findForWrite(ctx: AccessContext, id: number) {
-    const kegiatan = await this.prisma.kegiatan.findFirst({ where: { id, isDelete: false } });
+    const kegiatan = await this.prisma.kegiatan.findFirst({
+      where: { id, isDelete: false },
+    });
     if (!kegiatan) {
       throw new NotFoundException(`Kegiatan dengan ID ${id} tidak ditemukan`);
     }
@@ -186,11 +215,18 @@ export class KegiatanService {
     return kegiatan;
   }
 
-  async update(ctx: AccessContext, id: number, dto: UpdateKegiatanDto, file?: Express.Multer.File) {
+  async update(
+    ctx: AccessContext,
+    id: number,
+    dto: UpdateKegiatanDto,
+    file?: Express.Multer.File,
+  ) {
     const existing = await this.findForWrite(ctx, id);
     const approver = await this.bolehApprove(ctx);
 
-    const gambarBaru = file ? await this.files.simpan(file, { publik: true }) : undefined;
+    const gambarBaru = file
+      ? await this.files.simpan(file, { publik: true })
+      : undefined;
 
     const data = await this.prisma.kegiatan.update({
       where: { id },
@@ -208,7 +244,8 @@ export class KegiatanService {
         }),
         // Isi diubah setelah diajukan/disetujui: harus diajukan ulang supaya tidak lolos ACC dengan konten lain.
         ...(!approver &&
-          (existing.statusPengajuan === 'DIAJUKAN' || existing.statusPengajuan === 'DISETUJUI') && {
+          (existing.statusPengajuan === 'DIAJUKAN' ||
+            existing.statusPengajuan === 'DISETUJUI') && {
             statusPengajuan: 'TIDAK' as const,
             alasanTolak: null,
           }),
@@ -220,12 +257,20 @@ export class KegiatanService {
     return { message: 'Kegiatan berhasil diperbarui', data };
   }
 
-  async updateStatus(ctx: AccessContext, id: number, dto: UpdateStatusKegiatanDto) {
+  async updateStatus(
+    ctx: AccessContext,
+    id: number,
+    dto: UpdateStatusKegiatanDto,
+  ) {
     await this.findForWrite(ctx, id);
 
     const data = await this.prisma.kegiatan.update({
       where: { id },
-      data: { status: dto.status, updateBy: ctx.user.nama, updatedAt: new Date() },
+      data: {
+        status: dto.status,
+        updateBy: ctx.user.nama,
+        updatedAt: new Date(),
+      },
     });
 
     return { message: 'Status kegiatan berhasil diperbarui', data };
@@ -249,9 +294,14 @@ export class KegiatanService {
   async ajukan(ctx: AccessContext, id: number) {
     const kegiatan = await this.findForWrite(ctx, id);
     if (kegiatan.area === 'RW') {
-      throw new BadRequestException('Kegiatan level RW sudah tampil ke seluruh warga.');
+      throw new BadRequestException(
+        'Kegiatan level RW sudah tampil ke seluruh warga.',
+      );
     }
-    if (kegiatan.statusPengajuan === 'DIAJUKAN' || kegiatan.statusPengajuan === 'DISETUJUI') {
+    if (
+      kegiatan.statusPengajuan === 'DIAJUKAN' ||
+      kegiatan.statusPengajuan === 'DISETUJUI'
+    ) {
       throw new BadRequestException('Kegiatan ini sudah diajukan.');
     }
 
@@ -278,19 +328,32 @@ export class KegiatanService {
     return { message: 'Kegiatan diajukan ke RW untuk disetujui.', data };
   }
 
-  async putuskanPengajuan(ctx: AccessContext, id: number, dto: KeputusanPengajuanDto) {
-    const kegiatan = await this.prisma.kegiatan.findFirst({ where: { id, isDelete: false } });
-    if (!kegiatan) throw new NotFoundException(`Kegiatan dengan ID ${id} tidak ditemukan`);
+  async putuskanPengajuan(
+    ctx: AccessContext,
+    id: number,
+    dto: KeputusanPengajuanDto,
+  ) {
+    const kegiatan = await this.prisma.kegiatan.findFirst({
+      where: { id, isDelete: false },
+    });
+    if (!kegiatan)
+      throw new NotFoundException(`Kegiatan dengan ID ${id} tidak ditemukan`);
     assertInArea(ctx, kegiatan.area);
     if (kegiatan.statusPengajuan !== 'DIAJUKAN') {
       throw new BadRequestException('Kegiatan ini tidak sedang diajukan.');
     }
 
     if (dto.action === 'TOLAK') {
-      if (!dto.alasan?.trim()) throw new BadRequestException('Alasan penolakan wajib diisi.');
+      if (!dto.alasan?.trim())
+        throw new BadRequestException('Alasan penolakan wajib diisi.');
       const data = await this.prisma.kegiatan.update({
         where: { id },
-        data: { statusPengajuan: 'DITOLAK', alasanTolak: dto.alasan, updateBy: ctx.user.nama, updatedAt: new Date() },
+        data: {
+          statusPengajuan: 'DITOLAK',
+          alasanTolak: dto.alasan,
+          updateBy: ctx.user.nama,
+          updatedAt: new Date(),
+        },
       });
       await this.audit.catat(ctx.user.sub, 'kegiatan.tolak', {
         target: 'Kegiatan',
@@ -319,7 +382,10 @@ export class KegiatanService {
         updatedAt: new Date(),
       },
     });
-    await this.audit.catat(ctx.user.sub, 'kegiatan.setujui', { target: 'Kegiatan', targetId: id });
+    await this.audit.catat(ctx.user.sub, 'kegiatan.setujui', {
+      target: 'Kegiatan',
+      targetId: id,
+    });
     await this.notifikasiService.kirimKePermission(
       'kegiatan.ajukan',
       kegiatan.area,
@@ -340,6 +406,9 @@ export class KegiatanService {
         ctx.user.sub,
       );
     }
-    return { message: 'Pengajuan disetujui. Kegiatan tampil ke seluruh warga.', data };
+    return {
+      message: 'Pengajuan disetujui. Kegiatan tampil ke seluruh warga.',
+      data,
+    };
   }
 }

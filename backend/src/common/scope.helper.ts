@@ -22,7 +22,10 @@ export function areaFilter(ctx: AccessContext): Area | null {
 }
 
 /** Pastikan data berarea `area` boleh disentuh user ini. */
-export function assertInArea(ctx: AccessContext, area: Area | RT | null | undefined) {
+export function assertInArea(
+  ctx: AccessContext,
+  area: Area | RT | null | undefined,
+) {
   const allowed = areaFilter(ctx);
   if (allowed !== null && allowed !== area) {
     throw new ForbiddenException('Data ini di luar wilayah Anda.');
@@ -46,7 +49,9 @@ export function isRtArea(area: Area | null | undefined): area is RT {
  * terlihat oleh pengurus RT 1). Melihat tidak berarti boleh mengubah; lihat `wargaTulisWhere`.
  */
 export function wargaBacaWhere(area: Area | null): Prisma.UserWhereInput {
-  const bukanAdmin: Prisma.UserWhereInput = { role: { level: { gt: LEVEL_ADMIN } } };
+  const bukanAdmin: Prisma.UserWhereInput = {
+    role: { level: { gt: LEVEL_ADMIN } },
+  };
   if (area === null) return bukanAdmin;
   const rumahDiArea: Prisma.UserWhereInput[] =
     area === 'RW' ? [] : [{ rumah: { some: { rt: area, isDelete: false } } }];

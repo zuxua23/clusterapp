@@ -6,7 +6,13 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, RT, StatusPembayaran, StatusPendaftaran, StatusRumah } from '@prisma/client';
+import {
+  Prisma,
+  RT,
+  StatusPembayaran,
+  StatusPendaftaran,
+  StatusRumah,
+} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotifikasiService } from '../notifikasi/notifikasi.service';
@@ -15,8 +21,18 @@ import { FileService } from '../common/file/file.service';
 import { SALT_ROUNDS } from '../auth/auth.service';
 import { AccessContext } from '../auth/auth.types';
 import { resolvePeriode } from '../common/periode.helper';
-import { areaFilter, assertInArea, rtFilter, wargaBacaWhere } from '../common/scope.helper';
-import { generatePassword, LEVEL_WARGA, totalTagihan, withTotal } from '../common/helpers';
+import {
+  areaFilter,
+  assertInArea,
+  rtFilter,
+  wargaBacaWhere,
+} from '../common/scope.helper';
+import {
+  generatePassword,
+  LEVEL_WARGA,
+  totalTagihan,
+  withTotal,
+} from '../common/helpers';
 import { CreateWargaDto } from './dto/create-warga.dto';
 import { UpdateWargaDto } from './dto/update-warga.dto';
 import { CreateRumahDto } from './dto/create-rumah.dto';
@@ -45,7 +61,20 @@ export interface RingkasanPeriode {
   rumah: RingkasanRumah[];
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'Mei',
+  'Jun',
+  'Jul',
+  'Agu',
+  'Sep',
+  'Okt',
+  'Nov',
+  'Des',
+];
 
 const RUMAH_SELECT = {
   id: true,
@@ -106,7 +135,9 @@ export class WargaService {
     if (targetUserId === ctx.user.sub) return;
     if (ctx.scope === 'ALL') return;
     if (ctx.scope === 'OWN') {
-      throw new ForbiddenException('Anda hanya dapat melihat data milik sendiri.');
+      throw new ForbiddenException(
+        'Anda hanya dapat melihat data milik sendiri.',
+      );
     }
     const target = await this.prisma.user.findUnique({
       where: { id: targetUserId },
@@ -129,7 +160,8 @@ export class WargaService {
     const rumah = await this.prisma.rumah.findFirst({
       where: { id: rumahId, isDelete: false },
     });
-    if (!rumah) throw new NotFoundException(`Rumah dengan ID ${rumahId} tidak ditemukan`);
+    if (!rumah)
+      throw new NotFoundException(`Rumah dengan ID ${rumahId} tidak ditemukan`);
 
     // Rumah milik sendiri selalu boleh dilihat, apa pun scope-nya (lihat catatan di
     // assertBolehLihatUser) — baru cek area kalau bukan rumah sendiri.
@@ -146,7 +178,12 @@ export class WargaService {
         pembayaran: {
           orderBy: { tanggalBayar: 'desc' },
           take: 1,
-          select: { idPembayaran: true, buktiTransaksi: true, tanggalBayar: true, tanggalKonfirmasi: true },
+          select: {
+            idPembayaran: true,
+            buktiTransaksi: true,
+            tanggalBayar: true,
+            tanggalKonfirmasi: true,
+          },
         },
       },
       orderBy: [{ tahunPeriode: 'desc' }, { bulanPeriode: 'desc' }],
@@ -179,10 +216,17 @@ export class WargaService {
     });
 
     if (rumah.length === 0) {
-      return { rumah: [], tagihan: [], summaryByPeriode: {}, totalSummary: null };
+      return {
+        rumah: [],
+        tagihan: [],
+        summaryByPeriode: {},
+        totalSummary: null,
+      };
     }
 
-    const where: Prisma.IplWhereInput = { idRumah: { in: rumah.map((r) => r.id) } };
+    const where: Prisma.IplWhereInput = {
+      idRumah: { in: rumah.map((r) => r.id) },
+    };
     const and: Prisma.IplWhereInput[] = [];
     const range = resolvePeriode(dari, sampai);
     if (range) {
@@ -191,7 +235,8 @@ export class WargaService {
       if (bulan) and.push({ bulanPeriode: bulan });
       if (th) and.push({ tahunPeriode: th });
     }
-    if (status && status !== 'SEMUA') and.push({ statusPembayaran: status as StatusPembayaran });
+    if (status && status !== 'SEMUA')
+      and.push({ statusPembayaran: status as StatusPembayaran });
     if (search) {
       const q = search.trim();
       if (q) {
@@ -214,7 +259,13 @@ export class WargaService {
         pembayaran: {
           orderBy: { tanggalBayar: 'desc' },
           take: 1,
-          select: { idPembayaran: true, buktiTransaksi: true, tanggalBayar: true, tanggalKonfirmasi: true, nominal: true },
+          select: {
+            idPembayaran: true,
+            buktiTransaksi: true,
+            tanggalBayar: true,
+            tanggalKonfirmasi: true,
+            nominal: true,
+          },
         },
       },
       orderBy: [
@@ -263,8 +314,12 @@ export class WargaService {
       totalTagihan: tagihan.length,
       totalNominal: tagihan.reduce((sum, t) => sum + t.nominal, 0),
       totalLunas: tagihan.filter((t) => t.statusPembayaran === 'LUNAS').length,
-      totalBelumLunas: tagihan.filter((t) => t.statusPembayaran === 'BELUM_LUNAS').length,
-      totalMenunggu: tagihan.filter((t) => t.statusPembayaran === 'MENUNGGU_KONFIRMASI').length,
+      totalBelumLunas: tagihan.filter(
+        (t) => t.statusPembayaran === 'BELUM_LUNAS',
+      ).length,
+      totalMenunggu: tagihan.filter(
+        (t) => t.statusPembayaran === 'MENUNGGU_KONFIRMASI',
+      ).length,
     };
 
     return { rumah, tagihan, summaryByPeriode, totalSummary };
@@ -275,7 +330,8 @@ export class WargaService {
     ctx: AccessContext,
     data: { idIpl: number; nominal?: number; bukti?: Express.Multer.File },
   ) {
-    if (!data.bukti) throw new BadRequestException('Bukti pembayaran wajib diunggah.');
+    if (!data.bukti)
+      throw new BadRequestException('Bukti pembayaran wajib diunggah.');
 
     const ipl = await this.prisma.ipl.findUnique({
       where: { id: data.idIpl },
@@ -294,7 +350,9 @@ export class WargaService {
       throw new BadRequestException('Tagihan ini sudah lunas.');
     }
     if (ipl.statusPembayaran === 'MENUNGGU_KONFIRMASI') {
-      throw new BadRequestException('Bukti pembayaran untuk tagihan ini sedang menunggu konfirmasi.');
+      throw new BadRequestException(
+        'Bukti pembayaran untuk tagihan ini sedang menunggu konfirmasi.',
+      );
     }
 
     const buktiId = await this.files.simpan(data.bukti);
@@ -304,7 +362,10 @@ export class WargaService {
           data: {
             idUser: ctx.user.sub,
             idIpl: data.idIpl,
-            nominal: data.nominal && data.nominal > 0 ? data.nominal : totalTagihan(ipl),
+            nominal:
+              data.nominal && data.nominal > 0
+                ? data.nominal
+                : totalTagihan(ipl),
             buktiTransaksi: buktiId,
           },
         });
@@ -329,7 +390,9 @@ export class WargaService {
       select: { level: true },
     });
     const kodePermissionNotif =
-      pembayarRole && pembayarRole.level < LEVEL_WARGA ? 'ipl.konfirmasi_pengurus' : 'ipl.konfirmasi';
+      pembayarRole && pembayarRole.level < LEVEL_WARGA
+        ? 'ipl.konfirmasi_pengurus'
+        : 'ipl.konfirmasi';
 
     await this.notifikasiService.kirimKePermission(
       kodePermissionNotif,
@@ -341,7 +404,10 @@ export class WargaService {
       ctx.user.sub,
     );
 
-    return { message: 'Bukti pembayaran berhasil dikirim. Menunggu konfirmasi.', data: pembayaran };
+    return {
+      message: 'Bukti pembayaran berhasil dikirim. Menunggu konfirmasi.',
+      data: pembayaran,
+    };
   }
 
   // ================================================================
@@ -361,17 +427,26 @@ export class WargaService {
         : { AND: [{ id }, wargaBacaWhere(area)] },
       select: WARGA_SELECT,
     });
-    if (!warga) throw new NotFoundException(`Warga dengan ID ${id} tidak ditemukan`);
+    if (!warga)
+      throw new NotFoundException(`Warga dengan ID ${id} tidak ditemukan`);
     return warga;
   }
 
-  private handleUniqueError(error: any): never {
-    if (error?.code === 'P2002') {
-      const target = String(error.meta?.target ?? '');
-      if (target.includes('email')) {
-        throw new ConflictException('Email ini sudah terdaftar. Gunakan email lain atau kosongkan.');
+  private handleUniqueError(error: unknown): never {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      const target = error.meta?.target;
+      const targetStr = Array.isArray(target) ? target.join(',') : '';
+      if (targetStr.includes('email')) {
+        throw new ConflictException(
+          'Email ini sudah terdaftar. Gunakan email lain atau kosongkan.',
+        );
       }
-      throw new ConflictException('Nama pengguna / no HP ini sudah terdaftar. Gunakan yang lain.');
+      throw new ConflictException(
+        'Nama pengguna / no HP ini sudah terdaftar. Gunakan yang lain.',
+      );
     }
     throw error;
   }
@@ -383,7 +458,9 @@ export class WargaService {
       where: { level: LEVEL_WARGA, isSystem: true },
     });
     if (!roleWarga) {
-      throw new InternalServerErrorException('Peran warga belum tersedia. Jalankan seed database.');
+      throw new InternalServerErrorException(
+        'Peran warga belum tersedia. Jalankan seed database.',
+      );
     }
 
     const username = (dto.username ?? dto.no_hp).trim();
@@ -403,7 +480,9 @@ export class WargaService {
           );
         }
         if (rumah.userId) {
-          throw new ConflictException(`Blok ${dto.blokRumah} sudah ada pemilik/penanggung jawab lain.`);
+          throw new ConflictException(
+            `Blok ${dto.blokRumah} sudah ada pemilik/penanggung jawab lain.`,
+          );
         }
 
         const created = await tx.user.create({
@@ -422,7 +501,13 @@ export class WargaService {
 
         await tx.rumah.update({
           where: { id: rumah.id },
-          data: { userId: created.id, status, isDelete: false, updateBy: actor, updateDate: new Date() },
+          data: {
+            userId: created.id,
+            status,
+            isDelete: false,
+            updateBy: actor,
+            updateDate: new Date(),
+          },
         });
         return created;
       });
@@ -438,7 +523,10 @@ export class WargaService {
     }
   }
 
-  async findAll(ctx: AccessContext, params: { search?: string; rt?: string } = {}) {
+  async findAll(
+    ctx: AccessContext,
+    params: { search?: string; rt?: string } = {},
+  ) {
     const area = areaFilter(ctx);
     const and: Prisma.UserWhereInput[] = [
       wargaBacaWhere(area ?? (params.rt ? (params.rt as RT) : null)),
@@ -509,7 +597,9 @@ export class WargaService {
       select: { id: true, blokRumah: true, rt: true, status: true },
     });
     if (rumahMilik.length > 0) {
-      const daftar = rumahMilik.map((r) => `${r.blokRumah} (${r.rt.replace('_', ' ')})`).join(', ');
+      const daftar = rumahMilik
+        .map((r) => `${r.blokRumah} (${r.rt.replace('_', ' ')})`)
+        .join(', ');
       throw new BadRequestException(
         `Warga ini masih tercatat sebagai pemilik/penanggung jawab rumah: ${daftar}. Tunjuk pemilik pengganti dulu lewat Ubah Rumah sebelum menghapus akun.`,
       );
@@ -529,7 +619,10 @@ export class WargaService {
       this.prisma.notifikasi.deleteMany({ where: { idUser: id } }),
       this.prisma.user.delete({ where: { id } }),
     ]);
-    await this.audit.catat(ctx.user.sub, 'warga.hapus', { target: 'User', targetId: id });
+    await this.audit.catat(ctx.user.sub, 'warga.hapus', {
+      target: 'User',
+      targetId: id,
+    });
 
     return { message: 'Warga berhasil dihapus.' };
   }
@@ -568,13 +661,18 @@ export class WargaService {
    * `userId = null` hanya berarti "pemilik belum terdaftar akun", bukan "tak bertuan".
    * Aturan: DIHUNI_* wajib ada pemilik; KOSONG boleh ada pemilik atau belum.
    */
-  private resolveStatus(userId: number | null, status?: StatusRumah): StatusRumah {
+  private resolveStatus(
+    userId: number | null,
+    status?: StatusRumah,
+  ): StatusRumah {
     if (status === 'KOSONG') {
       return StatusRumah.KOSONG;
     }
     if (status === 'DIHUNI_KONTRAK' || status === 'DIHUNI_TETAP') {
       if (!userId) {
-        throw new BadRequestException('Rumah berstatus dihuni harus memiliki pemilik/penghuni.');
+        throw new BadRequestException(
+          'Rumah berstatus dihuni harus memiliki pemilik/penghuni.',
+        );
       }
       return status;
     }
@@ -587,7 +685,8 @@ export class WargaService {
       where: { id: userId },
       select: { id: true, area: true },
     });
-    if (!user) throw new NotFoundException(`User dengan ID ${userId} tidak ditemukan`);
+    if (!user)
+      throw new NotFoundException(`User dengan ID ${userId} tidak ditemukan`);
     assertInArea(ctx, user.area);
   }
 
@@ -610,7 +709,9 @@ export class WargaService {
       where: { rt_blokRumah: { rt: dto.rt, blokRumah: dto.blokRumah } },
     });
     if (existing && !existing.isDelete) {
-      throw new ConflictException(`Blok ${dto.blokRumah} di ${dto.rt.replace('_', ' ')} sudah terdaftar.`);
+      throw new ConflictException(
+        `Blok ${dto.blokRumah} di ${dto.rt.replace('_', ' ')} sudah terdaftar.`,
+      );
     }
 
     const include = { penghuni: { select: PENGHUNI_SELECT } };
@@ -618,7 +719,13 @@ export class WargaService {
     if (existing) {
       const revived = await this.prisma.rumah.update({
         where: { id: existing.id },
-        data: { userId, status, isDelete: false, updateBy: ctx.user.nama, updateDate: new Date() },
+        data: {
+          userId,
+          status,
+          isDelete: false,
+          updateBy: ctx.user.nama,
+          updateDate: new Date(),
+        },
         include,
       });
       await this.audit.catat(ctx.user.sub, 'rumah.ubah_status', {
@@ -629,7 +736,13 @@ export class WargaService {
       return revived;
     }
     const created = await this.prisma.rumah.create({
-      data: { rt: dto.rt, blokRumah: dto.blokRumah, userId, status, createBy: ctx.user.nama },
+      data: {
+        rt: dto.rt,
+        blokRumah: dto.blokRumah,
+        userId,
+        status,
+        createBy: ctx.user.nama,
+      },
       include,
     });
     await this.audit.catat(ctx.user.sub, 'rumah.ubah_status', {
@@ -641,8 +754,11 @@ export class WargaService {
   }
 
   async updateRumah(ctx: AccessContext, id: number, dto: UpdateRumahDto) {
-    const existing = await this.prisma.rumah.findFirst({ where: { id, isDelete: false } });
-    if (!existing) throw new NotFoundException(`Rumah dengan ID ${id} tidak ditemukan`);
+    const existing = await this.prisma.rumah.findFirst({
+      where: { id, isDelete: false },
+    });
+    if (!existing)
+      throw new NotFoundException(`Rumah dengan ID ${id} tidak ditemukan`);
     assertInArea(ctx, existing.rt);
     if (dto.rt) assertInArea(ctx, dto.rt);
 
@@ -652,7 +768,8 @@ export class WargaService {
     // Status eksplisit dari klien menang; kalau penghuni berubah tanpa status, ikuti penghuni.
     const statusDiminta =
       dto.status ??
-      (dto.userId !== undefined && (dto.userId === null) !== (existing.userId === null)
+      (dto.userId !== undefined &&
+      (dto.userId === null) !== (existing.userId === null)
         ? undefined
         : existing.status);
     const status = this.resolveStatus(userId, statusDiminta);
@@ -693,17 +810,25 @@ export class WargaService {
         }
       }
       return updated;
-    } catch (error: any) {
-      if (error?.code === 'P2002') {
-        throw new ConflictException('Blok rumah tersebut sudah terdaftar di RT ini.');
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'Blok rumah tersebut sudah terdaftar di RT ini.',
+        );
       }
       throw error;
     }
   }
 
   async removeRumah(ctx: AccessContext, id: number) {
-    const existing = await this.prisma.rumah.findFirst({ where: { id, isDelete: false } });
-    if (!existing) throw new NotFoundException(`Rumah dengan ID ${id} tidak ditemukan`);
+    const existing = await this.prisma.rumah.findFirst({
+      where: { id, isDelete: false },
+    });
+    if (!existing)
+      throw new NotFoundException(`Rumah dengan ID ${id} tidak ditemukan`);
     assertInArea(ctx, existing.rt);
 
     await this.prisma.rumah.update({
@@ -744,7 +869,13 @@ export class WargaService {
 
   async daftarMandiri(dto: DaftarMandiriDto) {
     const rumah = await this.prisma.rumah.findFirst({
-      where: { id: dto.rumahId, rt: dto.rt, isDelete: false, status: 'KOSONG', userId: null },
+      where: {
+        id: dto.rumahId,
+        rt: dto.rt,
+        isDelete: false,
+        status: 'KOSONG',
+        userId: null,
+      },
     });
     if (!rumah) {
       throw new BadRequestException(
@@ -754,7 +885,12 @@ export class WargaService {
 
     const [userDuplikat, pendaftaranDuplikat] = await Promise.all([
       this.prisma.user.findFirst({
-        where: { OR: [{ username: dto.noTelp }, ...(dto.email ? [{ email: dto.email }] : [])] },
+        where: {
+          OR: [
+            { username: dto.noTelp },
+            ...(dto.email ? [{ email: dto.email }] : []),
+          ],
+        },
         select: { id: true },
       }),
       this.prisma.pendaftaranWarga.findFirst({
@@ -763,7 +899,9 @@ export class WargaService {
       }),
     ]);
     if (userDuplikat) {
-      throw new ConflictException('Nomor HP atau email ini sudah terdaftar sebagai akun.');
+      throw new ConflictException(
+        'Nomor HP atau email ini sudah terdaftar sebagai akun.',
+      );
     }
     if (pendaftaranDuplikat) {
       throw new ConflictException(
@@ -794,7 +932,10 @@ export class WargaService {
       '/dashboard/warga',
     );
 
-    return { message: 'Pendaftaran berhasil dikirim. Menunggu persetujuan pengurus RT.' };
+    return {
+      message:
+        'Pendaftaran berhasil dikirim. Menunggu persetujuan pengurus RT.',
+    };
   }
 
   /** Pengurus: daftar pendaftaran di area-nya (default hanya yang masih Menunggu). */
@@ -803,7 +944,9 @@ export class WargaService {
     return this.prisma.pendaftaranWarga.findMany({
       where: {
         ...(area !== null && { rt: area as RT }),
-        status: (status && status !== 'SEMUA' ? status : 'PENDING') as StatusPendaftaran,
+        status: (status && status !== 'SEMUA'
+          ? status
+          : 'PENDING') as StatusPendaftaran,
       },
       include: { rumah: { select: { id: true, blokRumah: true, rt: true } } },
       orderBy: { createdAt: 'desc' },
@@ -811,16 +954,27 @@ export class WargaService {
   }
 
   private async findPendaftaranScoped(ctx: AccessContext, id: number) {
-    const pendaftaran = await this.prisma.pendaftaranWarga.findUnique({ where: { id } });
-    if (!pendaftaran) throw new NotFoundException(`Pendaftaran dengan ID ${id} tidak ditemukan`);
+    const pendaftaran = await this.prisma.pendaftaranWarga.findUnique({
+      where: { id },
+    });
+    if (!pendaftaran)
+      throw new NotFoundException(
+        `Pendaftaran dengan ID ${id} tidak ditemukan`,
+      );
     assertInArea(ctx, pendaftaran.rt);
     if (pendaftaran.status !== 'PENDING') {
-      throw new BadRequestException('Pendaftaran ini sudah diproses sebelumnya.');
+      throw new BadRequestException(
+        'Pendaftaran ini sudah diproses sebelumnya.',
+      );
     }
     return pendaftaran;
   }
 
-  async setujuiPendaftaran(ctx: AccessContext, id: number, statusHunian?: StatusRumah) {
+  async setujuiPendaftaran(
+    ctx: AccessContext,
+    id: number,
+    statusHunian?: StatusRumah,
+  ) {
     const pendaftaran = await this.findPendaftaranScoped(ctx, id);
     // Default KOSONG: pendaftar umumnya pemilik rumah kosong yang tetap tidak
     // menempati rumahnya (tetap ditagih IPL, masuk kas RT). Pengurus dapat
@@ -831,14 +985,18 @@ export class WargaService {
       where: { level: LEVEL_WARGA, isSystem: true },
     });
     if (!roleWarga) {
-      throw new InternalServerErrorException('Peran warga belum tersedia. Jalankan seed database.');
+      throw new InternalServerErrorException(
+        'Peran warga belum tersedia. Jalankan seed database.',
+      );
     }
 
     try {
       const user = await this.prisma.$transaction(async (tx) => {
         // Cek ulang rumah masih kosong — bisa saja sudah diisi pengurus lewat menu Data
         // Warga sejak pendaftaran ini masuk.
-        const rumah = await tx.rumah.findUnique({ where: { id: pendaftaran.rumahId } });
+        const rumah = await tx.rumah.findUnique({
+          where: { id: pendaftaran.rumahId },
+        });
         if (!rumah || rumah.isDelete || rumah.userId) {
           throw new ConflictException(
             'Rumah yang dipilih sudah terisi warga lain. Tolak pendaftaran ini dan minta warga mendaftar ulang.',
@@ -871,13 +1029,20 @@ export class WargaService {
 
         await tx.pendaftaranWarga.update({
           where: { id: pendaftaran.id },
-          data: { status: 'DISETUJUI', diprosesOleh: ctx.user.nama, diprosesAt: new Date() },
+          data: {
+            status: 'DISETUJUI',
+            diprosesOleh: ctx.user.nama,
+            diprosesAt: new Date(),
+          },
         });
 
         return created;
       });
 
-      return { message: `${pendaftaran.namaUser} disetujui dan akun warga dibuat.`, data: user };
+      return {
+        message: `${pendaftaran.namaUser} disetujui dan akun warga dibuat.`,
+        data: user,
+      };
     } catch (error) {
       this.handleUniqueError(error);
     }
@@ -887,7 +1052,12 @@ export class WargaService {
     const pendaftaran = await this.findPendaftaranScoped(ctx, id);
     await this.prisma.pendaftaranWarga.update({
       where: { id: pendaftaran.id },
-      data: { status: 'DITOLAK', alasanTolak: alasan, diprosesOleh: ctx.user.nama, diprosesAt: new Date() },
+      data: {
+        status: 'DITOLAK',
+        alasanTolak: alasan,
+        diprosesOleh: ctx.user.nama,
+        diprosesAt: new Date(),
+      },
     });
     return { message: `Pendaftaran ${pendaftaran.namaUser} ditolak.` };
   }

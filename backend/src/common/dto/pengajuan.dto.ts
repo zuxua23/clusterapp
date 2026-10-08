@@ -13,7 +13,9 @@ export class KeputusanPengajuanDto {
 
   /** Berapa hari tampil di dashboard warga; 0 atau kosong = tanpa batas. */
   @IsOptional()
-  @Transform(({ value }) => (value === '' ? undefined : value))
+  @Transform(({ value }: { value: unknown }) =>
+    value === '' ? undefined : value,
+  )
   @Type(() => Number)
   @IsInt()
   @Min(0)

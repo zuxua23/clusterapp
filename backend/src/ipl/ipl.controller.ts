@@ -16,7 +16,11 @@ import { FileService } from '../common/file/file.service';
 import { GenerateIplDto } from './dto/generate-ipl.dto';
 import { UpdateIplDto } from './dto/update-ipl.dto';
 import { KonfirmasiIplDto } from './dto/konfirmasi-ipl.dto';
-import { Access, CurrentUser, RequirePermission } from '../auth/permission.decorators';
+import {
+  Access,
+  CurrentUser,
+  RequirePermission,
+} from '../auth/permission.decorators';
 import type { AccessContext, AuthUser } from '../auth/auth.types';
 
 @Controller('ipl')
@@ -71,7 +75,15 @@ export class IplController {
     @Query('search') search?: string,
     @Query('rt') rt?: string,
   ) {
-    return this.iplService.findAll(ctx, { bulan, tahun, dari, sampai, status, search, rt });
+    return this.iplService.findAll(ctx, {
+      bulan,
+      tahun,
+      dari,
+      sampai,
+      status,
+      search,
+      rt,
+    });
   }
 
   /** GET /ipl/pembayaran/:id/bukti — Unduh bukti transfer (butuh login + scope sesuai). */

@@ -71,18 +71,11 @@ body {
   min-height: 100%;
 }
 
-html {
-  /* Matikan efek "pull-to-refresh"/bounce glow Chrome pas scroll nyampe ujung atas/bawah
-     — di PWA terinstall ini kerasa seperti UI browser, bukan app native. */
-  overscroll-behavior-y: none;
-}
-
 body {
   min-width: 320px;
   min-height: 100vh;
   min-height: 100dvh; /* harus sama dengan tinggi shell dashboard (dvh), kalau tidak halaman bisa di-scroll melewati footer di HP */
   overflow-x: hidden;
-  overscroll-behavior-y: none;
   font-family: "Poppins", sans-serif;
   background: var(--bg-main);
   color: var(--text-primary);
@@ -94,6 +87,17 @@ body {
      karena user tetap harus bisa select/copy/paste teks yang mereka ketik sendiri. */
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Matikan efek "pull-to-refresh"/bounce glow Chrome pas scroll nyampe ujung atas/bawah —
+   TAPI hanya kalau app sudah di-install (dibuka sebagai PWA standalone), karena di situ
+   kerasa seperti UI browser, bukan app native. Di tab browser biasa pull-to-refresh harus
+   tetap jalan seperti web pada umumnya. */
+@media (display-mode: standalone) {
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
 }
 
 input,

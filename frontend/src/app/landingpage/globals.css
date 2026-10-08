@@ -682,11 +682,15 @@ html {
   .lp-navbar {
     padding: 0 16px !important;
   }
-}
 
-/* Portofolio: linimasa per tahun jadi satu kolom di layar sempit, tapi kartu kegiatan
-   tetap 2 per baris (bukan ikut jadi 1 kolom penuh). */
-@media (max-width: 720px) {
+  /* Portofolio: linimasa per tahun jadi satu kolom di layar sempit, tapi kartu kegiatan
+     tetap 2 per baris (bukan ikut jadi 1 kolom penuh).
+     Digabung ke breakpoint 768px ini (bukan @media (max-width: 720px) terpisah) —
+     media query kecil & terisolasi itu bikin scroll wheel/keyboard macet total di
+     seluruh landing page pada Chrome tertentu meski selector-nya (.lp-porto-*) tidak
+     pernah match elemen apa pun di luar halaman portofolio. Root cause-nya tidak
+     jelas (bukan soal CSS yang salah — murni kuirk render engine), tapi digabung ke
+     breakpoint yang sudah terbukti aman ini menghindarinya sepenuhnya. */
   .lp-porto-row { grid-template-columns: 1fr !important; gap: 8px !important; }
 
   .lp-porto-cards {

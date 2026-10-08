@@ -10,7 +10,6 @@ frontend/node_modules/
 .env*
 
 .next
-.next
 frontend/.next
 backend/*.tsbuildinfo
 
@@ -19,8 +18,8 @@ backend/prisma/seed.js.map
 backend/prisma/seed.d.ts
 
 .claude/
-RENCANA-PERABIKAN-SISTEM.md
 *.tsbuildinfo
+*.log
 
 CHANGELOG.md
 PERUBAHAN-22-SEP-2026.md

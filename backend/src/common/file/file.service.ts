@@ -11,9 +11,15 @@ const MIME: Record<string, string> = {
   '.svg': 'image/svg+xml', // hanya dari seed; tidak ada endpoint upload yang menerima SVG
   '.pdf': 'application/pdf',
   '.doc': 'application/msword',
-  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.docx':
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
-const TAMPIL_DI_BROWSER = new Set(['image/jpeg', 'image/png', 'image/svg+xml', 'application/pdf']);
+const TAMPIL_DI_BROWSER = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/svg+xml',
+  'application/pdf',
+]);
 
 export const mimeDariNama = (nama: string) =>
   MIME[path.extname(nama).toLowerCase()] ?? 'application/octet-stream';
@@ -65,7 +71,9 @@ export class FileService {
       'Content-Length': String(file.data.length),
       'Content-Disposition': `${tampil ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(file.namaAsli)}`,
       'X-Content-Type-Options': 'nosniff',
-      'Cache-Control': file.publik ? 'public, max-age=86400' : 'private, no-store',
+      'Cache-Control': file.publik
+        ? 'public, max-age=86400'
+        : 'private, no-store',
     });
     res.end(Buffer.from(file.data));
   }

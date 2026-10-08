@@ -32,7 +32,6 @@ export default function PendaftaranPage() {
 
   useEffect(() => {
     if (bolehApprove) loadPendaftaran();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bolehApprove]);
 
   const handleSetujuiPendaftaran = async (item) => {

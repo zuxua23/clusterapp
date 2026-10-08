@@ -14,7 +14,11 @@ import { CreatePengaduanDto } from './dto/create-pengaduan.dto';
 import { RespondPengaduanDto } from './dto/respond-pengaduan.dto';
 import { pengaduanMulterOptions } from './pengaduan.multer';
 import { PengaduanService } from './pengaduan.service';
-import { Access, CurrentUser, RequirePermission } from '../auth/permission.decorators';
+import {
+  Access,
+  CurrentUser,
+  RequirePermission,
+} from '../auth/permission.decorators';
 import type { AccessContext, AuthUser } from '../auth/auth.types';
 
 @Controller('pengaduan')
@@ -45,7 +49,10 @@ export class PengaduanController {
   /** GET /pengaduan/user/:userId — daftar pengaduan milik satu warga */
   @Get('user/:userId')
   @RequirePermission('pengaduan', 'read')
-  findByUser(@Access() ctx: AccessContext, @Param('userId', ParseIntPipe) userId: number) {
+  findByUser(
+    @Access() ctx: AccessContext,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
     return this.pengaduanService.findByUser(ctx, userId);
   }
 

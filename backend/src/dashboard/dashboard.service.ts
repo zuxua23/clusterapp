@@ -174,14 +174,21 @@ export class DashboardRwService {
     }
     // Setoran terakhir per RT di periode ini (untuk status mini-list).
     const terakhirPerRt: Record<string, { status: string; tgl: Date }> = {};
-    const catatTerakhir = (area: string, status: string, tgl: Date | null, fallback: Date) => {
+    const catatTerakhir = (
+      area: string,
+      status: string,
+      tgl: Date | null,
+      fallback: Date,
+    ) => {
       const t = tgl ?? fallback;
       if (!terakhirPerRt[area] || t > terakhirPerRt[area].tgl) {
         terakhirPerRt[area] = { status, tgl: t };
       }
     };
-    for (const r of setoranDikonf) catatTerakhir(r.area, 'DIKONFIRMASI', null, r.createDate);
-    for (const r of setoranTunggu) catatTerakhir(r.area, 'MENUNGGU_KONFIRMASI', null, r.createDate);
+    for (const r of setoranDikonf)
+      catatTerakhir(r.area, 'DIKONFIRMASI', null, r.createDate);
+    for (const r of setoranTunggu)
+      catatTerakhir(r.area, 'MENUNGGU_KONFIRMASI', null, r.createDate);
     for (const r of setoranDitolak) {
       catatTerakhir(r.area, 'DITOLAK', r.tanggalKonfirmasi, r.createDate);
     }
@@ -204,8 +211,13 @@ export class DashboardRwService {
     // masih dipegang RT). Masuk periode = setoran periode + manual masuk.
     const sumRows = (rows: { nominal: number }[]) =>
       rows.reduce((s, r) => s + r.nominal, 0);
-    const setoranMasuk = setoranPeriodeIpl.reduce((s, r) => s + r.nominalIpl, 0);
-    const manualMasuk = sumRows(kasPeriode.filter((t) => t.tipe === 'PEMASUKAN'));
+    const setoranMasuk = setoranPeriodeIpl.reduce(
+      (s, r) => s + r.nominalIpl,
+      0,
+    );
+    const manualMasuk = sumRows(
+      kasPeriode.filter((t) => t.tipe === 'PEMASUKAN'),
+    );
     const manualKeluar = sumRows(
       kasPeriode.filter((t) => t.tipe === 'PENGELUARAN'),
     );
@@ -251,15 +263,15 @@ export class DashboardRwService {
       ...setoranDikonf.map((r) => r.area),
       ...setoranTunggu.map((r) => r.area),
     ]);
-    const ditolakAktif = setoranDitolak.filter((r) => !rtAdaSusulan.has(r.area));
+    const ditolakAktif = setoranDitolak.filter(
+      (r) => !rtAdaSusulan.has(r.area),
+    );
     const rtKosong = RT_LIST.filter((rt) => !rtAdaTagihan.has(rt)).map(
       (rt) => ({ rt, alasan: 'belum-buat' as const }),
     );
     const rtBelumTerkumpul = RT_LIST.filter(
       (rt) =>
-        rtAdaTagihan.has(rt) &&
-        (terkumpul[rt] ?? 0) === 0 &&
-        !tungguRt.has(rt),
+        rtAdaTagihan.has(rt) && (terkumpul[rt] ?? 0) === 0 && !tungguRt.has(rt),
     ).map((rt) => ({ rt, alasan: 'belum-terkumpul' as const }));
 
     return {
@@ -300,7 +312,10 @@ export class DashboardRwService {
       tren,
       perluTindakan: {
         total:
-          setoranTunggu.length + ditolakAktif.length + rtKosong.length + rtBelumTerkumpul.length,
+          setoranTunggu.length +
+          ditolakAktif.length +
+          rtKosong.length +
+          rtBelumTerkumpul.length,
         menunggu: setoranTunggu.map((r) => ({
           id: r.id,
           rt: r.area,

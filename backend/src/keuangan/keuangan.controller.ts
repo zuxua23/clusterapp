@@ -65,7 +65,14 @@ export class KeuanganController {
     @Query('search') search?: string,
     @Query('area') area?: string,
   ) {
-    return this.keuanganService.findAll(ctx, { dari, sampai, tipe, kategori, search, area });
+    return this.keuanganService.findAll(ctx, {
+      dari,
+      sampai,
+      tipe,
+      kategori,
+      search,
+      area,
+    });
   }
 
   /** GET /keuangan/export — Unduh Riwayat Kas (CSV/XLSX + saldo berjalan). Wajib di atas ':id'. */
@@ -87,15 +94,22 @@ export class KeuanganController {
   /** GET /keuangan/:id/bukti — unduh bukti file transaksi (butuh login + scope area). Wajib di atas ':id'. */
   @Get(':id/bukti')
   @RequirePermission('keuangan', 'read')
-  async bukti(@Access() ctx: AccessContext, @Param('id') id: string, @Res() res: Response) {
-    await this.files.kirim(res, await this.keuanganService.fileIdBukti(ctx, id));
+  async bukti(
+    @Access() ctx: AccessContext,
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    await this.files.kirim(
+      res,
+      await this.keuanganService.fileIdBukti(ctx, id),
+    );
   }
 
   /** GET /keuangan/:id — Detail satu transaksi */
   @Get(':id')
   @RequirePermission('keuangan', 'read')
   findOne(@Access() ctx: AccessContext, @Param('id') id: string) {
-    return this.keuanganService.findOne(ctx, id as any);
+    return this.keuanganService.findOne(ctx, id);
   }
 
   /** PATCH /keuangan/:id — Perbarui transaksi */
@@ -108,13 +122,13 @@ export class KeuanganController {
     @Body() dto: UpdateKasDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.keuanganService.update(ctx, id as any, dto, file);
+    return this.keuanganService.update(ctx, id, dto, file);
   }
 
   /** DELETE /keuangan/:id — Hapus transaksi */
   @Delete(':id')
   @RequirePermission('keuangan', 'delete')
   remove(@Access() ctx: AccessContext, @Param('id') id: string) {
-    return this.keuanganService.remove(ctx, id as any);
+    return this.keuanganService.remove(ctx, id);
   }
 }

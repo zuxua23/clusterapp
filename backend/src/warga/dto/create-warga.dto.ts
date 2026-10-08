@@ -11,7 +11,8 @@ import { Transform } from 'class-transformer';
 import { RT, StatusRumah } from '@prisma/client';
 import { BLOK_RUMAH_MESSAGE, BLOK_RUMAH_REGEX } from '../../common/helpers';
 
-const blank = ({ value }: { value: unknown }) => (value === '' ? undefined : value);
+const blank = ({ value }: { value: unknown }) =>
+  value === '' ? undefined : value;
 
 export class CreateWargaDto {
   @IsString()

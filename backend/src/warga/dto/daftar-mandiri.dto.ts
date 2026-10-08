@@ -1,8 +1,17 @@
-import { IsEmail, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 import { RT } from '@prisma/client';
 
-const blank = ({ value }: { value: unknown }) => (value === '' ? undefined : value);
+const blank = ({ value }: { value: unknown }) =>
+  value === '' ? undefined : value;
 
 /** Registrasi mandiri warga (Bagian 3) — masuk status Menunggu Persetujuan, bukan langsung aktif. */
 export class DaftarMandiriDto {

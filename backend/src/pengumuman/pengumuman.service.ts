@@ -1,5 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Area, Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Area, Prisma, StatusPengajuan } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePengumumanDto } from './dto/create-pengumuman.dto';
 import { UpdatePengumumanDto } from './dto/update-pengumuman.dto';
@@ -40,18 +44,29 @@ export class PengumumanService {
   ) {}
 
   private async bolehApprove(ctx: AccessContext) {
-    return (await this.permissions.scopeOf(ctx.user.roleId, 'pengumuman.approve')) !== null;
+    return (
+      (await this.permissions.scopeOf(
+        ctx.user.roleId,
+        'pengumuman.approve',
+      )) !== null
+    );
   }
 
   // ================================================================
   // CRUD
   // ================================================================
 
-  async create(ctx: AccessContext, dto: CreatePengumumanDto, file?: Express.Multer.File) {
+  async create(
+    ctx: AccessContext,
+    dto: CreatePengumumanDto,
+    file?: Express.Multer.File,
+  ) {
     const area: Area = areaFilter(ctx) ?? dto.area ?? ctx.user.area ?? 'RW';
     const approver = await this.bolehApprove(ctx);
 
-    const filePengumuman = file ? await this.files.simpan(file, { publik: true }) : undefined;
+    const filePengumuman = file
+      ? await this.files.simpan(file, { publik: true })
+      : undefined;
     const data = await this.prisma.pengumuman.create({
       data: {
         judul: dto.judul,
@@ -79,10 +94,18 @@ export class PengumumanService {
     return { message: 'Pengumuman berhasil dibuat', data };
   }
 
-  findAll(ctx: AccessContext, params: { pengajuan?: string; area?: string } = {}) {
-    const and: Prisma.PengumumanWhereInput[] = [{ isDelete: false }, visibilitasKelolaWhere(ctx)];
-    if (params.pengajuan) and.push({ statusPengajuan: params.pengajuan as any });
-    if (params.area && ctx.scope === 'ALL') and.push({ area: params.area as Area });
+  findAll(
+    ctx: AccessContext,
+    params: { pengajuan?: string; area?: string } = {},
+  ) {
+    const and: Prisma.PengumumanWhereInput[] = [
+      { isDelete: false },
+      visibilitasKelolaWhere(ctx),
+    ];
+    if (params.pengajuan)
+      and.push({ statusPengajuan: params.pengajuan as StatusPengajuan });
+    if (params.area && ctx.scope === 'ALL')
+      and.push({ area: params.area as Area });
     return this.prisma.pengumuman.findMany({
       where: { AND: and },
       orderBy: { createDate: 'desc' },
@@ -134,7 +157,9 @@ export class PengumumanService {
   }
 
   private async findForWrite(ctx: AccessContext, id: number) {
-    const pengumuman = await this.prisma.pengumuman.findFirst({ where: { id, isDelete: false } });
+    const pengumuman = await this.prisma.pengumuman.findFirst({
+      where: { id, isDelete: false },
+    });
     if (!pengumuman) {
       throw new NotFoundException(`Pengumuman dengan ID ${id} tidak ditemukan`);
     }
@@ -142,11 +167,18 @@ export class PengumumanService {
     return pengumuman;
   }
 
-  async update(ctx: AccessContext, id: number, dto: UpdatePengumumanDto, file?: Express.Multer.File) {
+  async update(
+    ctx: AccessContext,
+    id: number,
+    dto: UpdatePengumumanDto,
+    file?: Express.Multer.File,
+  ) {
     const existing = await this.findForWrite(ctx, id);
     const approver = await this.bolehApprove(ctx);
 
-    const fileBaru = file ? await this.files.simpan(file, { publik: true }) : undefined;
+    const fileBaru = file
+      ? await this.files.simpan(file, { publik: true })
+      : undefined;
 
     const data = await this.prisma.pengumuman.update({
       where: { id },
@@ -160,7 +192,8 @@ export class PengumumanService {
         ...(approver && { tampilSampai: tampilSampaiDari(dto.durasiHari) }),
         // Isi diubah setelah diajukan/disetujui: harus diajukan ulang.
         ...(!approver &&
-          (existing.statusPengajuan === 'DIAJUKAN' || existing.statusPengajuan === 'DISETUJUI') && {
+          (existing.statusPengajuan === 'DIAJUKAN' ||
+            existing.statusPengajuan === 'DISETUJUI') && {
             statusPengajuan: 'TIDAK' as const,
             alasanTolak: null,
           }),
@@ -172,12 +205,20 @@ export class PengumumanService {
     return { message: 'Pengumuman berhasil diperbarui', data };
   }
 
-  async updateStatus(ctx: AccessContext, id: number, dto: UpdateStatusPengumumanDto) {
+  async updateStatus(
+    ctx: AccessContext,
+    id: number,
+    dto: UpdateStatusPengumumanDto,
+  ) {
     await this.findForWrite(ctx, id);
 
     const data = await this.prisma.pengumuman.update({
       where: { id },
-      data: { status: dto.status, updateBy: ctx.user.nama, updateDate: new Date() },
+      data: {
+        status: dto.status,
+        updateBy: ctx.user.nama,
+        updateDate: new Date(),
+      },
     });
 
     return { message: 'Status pengumuman berhasil diperbarui', data };
@@ -201,9 +242,14 @@ export class PengumumanService {
   async ajukan(ctx: AccessContext, id: number) {
     const pengumuman = await this.findForWrite(ctx, id);
     if (pengumuman.area === 'RW') {
-      throw new BadRequestException('Pengumuman level RW sudah tampil ke seluruh warga.');
+      throw new BadRequestException(
+        'Pengumuman level RW sudah tampil ke seluruh warga.',
+      );
     }
-    if (pengumuman.statusPengajuan === 'DIAJUKAN' || pengumuman.statusPengajuan === 'DISETUJUI') {
+    if (
+      pengumuman.statusPengajuan === 'DIAJUKAN' ||
+      pengumuman.statusPengajuan === 'DISETUJUI'
+    ) {
       throw new BadRequestException('Pengumuman ini sudah diajukan.');
     }
 
@@ -230,16 +276,24 @@ export class PengumumanService {
     return { message: 'Pengumuman diajukan ke RW untuk disetujui.', data };
   }
 
-  async putuskanPengajuan(ctx: AccessContext, id: number, dto: KeputusanPengajuanDto) {
-    const pengumuman = await this.prisma.pengumuman.findFirst({ where: { id, isDelete: false } });
-    if (!pengumuman) throw new NotFoundException(`Pengumuman dengan ID ${id} tidak ditemukan`);
+  async putuskanPengajuan(
+    ctx: AccessContext,
+    id: number,
+    dto: KeputusanPengajuanDto,
+  ) {
+    const pengumuman = await this.prisma.pengumuman.findFirst({
+      where: { id, isDelete: false },
+    });
+    if (!pengumuman)
+      throw new NotFoundException(`Pengumuman dengan ID ${id} tidak ditemukan`);
     assertInArea(ctx, pengumuman.area);
     if (pengumuman.statusPengajuan !== 'DIAJUKAN') {
       throw new BadRequestException('Pengumuman ini tidak sedang diajukan.');
     }
 
     if (dto.action === 'TOLAK') {
-      if (!dto.alasan?.trim()) throw new BadRequestException('Alasan penolakan wajib diisi.');
+      if (!dto.alasan?.trim())
+        throw new BadRequestException('Alasan penolakan wajib diisi.');
       const data = await this.prisma.pengumuman.update({
         where: { id },
         data: {
@@ -300,6 +354,9 @@ export class PengumumanService {
         ctx.user.sub,
       );
     }
-    return { message: 'Pengajuan disetujui. Pengumuman tampil ke seluruh warga.', data };
+    return {
+      message: 'Pengajuan disetujui. Pengumuman tampil ke seluruh warga.',
+      data,
+    };
   }
 }

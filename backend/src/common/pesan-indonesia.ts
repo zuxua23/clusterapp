@@ -86,7 +86,8 @@ const TEMPLATE: Record<string, (l: string, pesanAsli: string) => string> = {
 };
 
 // Pesan bawaan class-validator berbahasa Inggris; pesan buatan kita (Indonesia) dibiarkan.
-const POLA_INGGRIS = /\b(should|must|is not|has to|be a|be an|longer|shorter)\b/i;
+const POLA_INGGRIS =
+  /\b(should|must|is not|has to|be a|be an|longer|shorter)\b/i;
 
 function ratakan(errors: ValidationError[], induk = ''): string[] {
   return errors.flatMap((e) => {
@@ -94,7 +95,8 @@ function ratakan(errors: ValidationError[], induk = ''): string[] {
     const sendiri = Object.entries(e.constraints ?? {}).map(([kunci, pesan]) =>
       !POLA_INGGRIS.test(pesan)
         ? pesan
-        : (TEMPLATE[kunci]?.(label(e.property), pesan) ?? `${label(e.property)} tidak valid`),
+        : (TEMPLATE[kunci]?.(label(e.property), pesan) ??
+          `${label(e.property)} tidak valid`),
     );
     return [...sendiri, ...ratakan(e.children ?? [], nama)];
   });
@@ -106,23 +108,39 @@ export const validasiIndonesia = (errors: ValidationError[]) =>
 
 // Pesan umum NestJS/multer -> Indonesia
 const TERJEMAHAN: Array<[RegExp, string]> = [
-  [/^unauthorized$/i, 'Anda belum masuk atau sesi sudah berakhir. Silakan masuk kembali.'],
+  [
+    /^unauthorized$/i,
+    'Anda belum masuk atau sesi sudah berakhir. Silakan masuk kembali.',
+  ],
   [/^forbidden( resource)?$/i, 'Anda tidak memiliki akses untuk aksi ini.'],
   [/^not found$/i, 'Data atau halaman tidak ditemukan.'],
-  [/^cannot (get|post|put|patch|delete) /i, 'Alamat yang diminta tidak ditemukan.'],
+  [
+    /^cannot (get|post|put|patch|delete) /i,
+    'Alamat yang diminta tidak ditemukan.',
+  ],
   [/^bad request$/i, 'Permintaan tidak valid.'],
   [/^conflict$/i, 'Data bentrok dengan data yang sudah ada.'],
   [/^internal server error$/i, 'Terjadi kesalahan pada server.'],
-  [/^validation failed \(numeric string is expected\)/i, 'ID harus berupa angka.'],
+  [
+    /^validation failed \(numeric string is expected\)/i,
+    'ID harus berupa angka.',
+  ],
   [/^validation failed/i, 'Data yang dikirim tidak valid.'],
   [/^file too large$/i, 'Ukuran file terlalu besar.'],
   [/^payload too large$/i, 'Ukuran data terlalu besar.'],
   [/^unexpected field/i, 'File yang dikirim tidak dikenali.'],
-  [/(unexpected token|expected property name|in json at position|is not valid json|unexpected end of json)/i, 'Format data yang dikirim tidak valid.'],
-  [/^too many (requests|files)/i, 'Terlalu banyak permintaan. Coba lagi sebentar lagi.'],
+  [
+    /(unexpected token|expected property name|in json at position|is not valid json|unexpected end of json)/i,
+    'Format data yang dikirim tidak valid.',
+  ],
+  [
+    /^too many (requests|files)/i,
+    'Terlalu banyak permintaan. Coba lagi sebentar lagi.',
+  ],
 ];
 
-const terjemahkan = (pesan: string) => TERJEMAHAN.find(([pola]) => pola.test(pesan))?.[1] ?? pesan;
+const terjemahkan = (pesan: string) =>
+  TERJEMAHAN.find(([pola]) => pola.test(pesan))?.[1] ?? pesan;
 
 @Catch()
 export class PesanIndonesiaFilter implements ExceptionFilter {
@@ -135,8 +153,13 @@ export class PesanIndonesiaFilter implements ExceptionFilter {
       const status = exception.getStatus();
       const body = exception.getResponse();
       const asli =
-        typeof body === 'string' ? body : ((body as { message?: string | string[] }).message ?? exception.message);
-      const message = Array.isArray(asli) ? asli.map(terjemahkan) : terjemahkan(asli);
+        typeof body === 'string'
+          ? body
+          : ((body as { message?: string | string[] }).message ??
+            exception.message);
+      const message = Array.isArray(asli)
+        ? asli.map(terjemahkan)
+        : terjemahkan(asli);
       return res.status(status).json({
         statusCode: status,
         message,
@@ -144,7 +167,11 @@ export class PesanIndonesiaFilter implements ExceptionFilter {
       });
     }
 
-    this.logger.error(exception instanceof Error ? (exception.stack ?? exception.message) : String(exception));
+    this.logger.error(
+      exception instanceof Error
+        ? (exception.stack ?? exception.message)
+        : String(exception),
+    );
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: 500,
       message: 'Terjadi kesalahan pada server.',

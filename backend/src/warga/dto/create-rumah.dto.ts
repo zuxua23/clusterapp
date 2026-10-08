@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsString, IsEnum, IsOptional, IsInt, Matches } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsInt,
+  Matches,
+} from 'class-validator';
 import { RT, StatusRumah } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { BLOK_RUMAH_MESSAGE, BLOK_RUMAH_REGEX } from '../../common/helpers';

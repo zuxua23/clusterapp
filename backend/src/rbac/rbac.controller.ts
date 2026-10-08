@@ -63,7 +63,10 @@ export class RbacController {
   }
 
   @Delete('roles/:id')
-  removeRole(@CurrentUser() user: AuthUser, @Param('id', ParseIntPipe) id: number) {
+  removeRole(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
     return this.rbacService.removeRole(user, id);
   }
 
@@ -153,7 +156,10 @@ export class PengurusController {
   }
 
   @Delete(':userId/foto')
-  hapusFoto(@CurrentUser() user: AuthUser, @Param('userId', ParseIntPipe) userId: number) {
+  hapusFoto(
+    @CurrentUser() user: AuthUser,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
     return this.pengurusService.hapusFoto(user, userId);
   }
 }

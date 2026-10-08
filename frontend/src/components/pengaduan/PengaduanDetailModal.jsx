@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, MessageCircle, Forward } from "lucide-react";
+import { MessageCircle, Forward } from "lucide-react";
 import { pengaduanApi } from "@/lib/api";
 import { areaLabel } from "@/lib/session";
 import { formatTanggalPanjang as formatDate } from "@/lib/format";

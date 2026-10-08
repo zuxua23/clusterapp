@@ -43,13 +43,13 @@ function CatatanFormModal({ open, mode, initialData, areaOtomatis, pilihArea, on
     setForm(
       mode === "edit" && initialData
         ? { judul: initialData.judul, isiNotulen: initialData.isiNotulen ?? "", area: initialData.area }
-        : { judul: "", isiNotulen: "", area: "RW" },
+        : { judul: "", isiNotulen: "", area: areaOtomatis || "RW" },
     );
     setFile(null);
     const awal = mode === "edit" && initialData ? jenisDariItem(initialData) : "isi";
     setJenisInput(awal);
     setJenisAwal(awal);
-  }, [open, mode, initialData]);
+  }, [open, mode, initialData, areaOtomatis]);
 
   if (!open) return null;
 

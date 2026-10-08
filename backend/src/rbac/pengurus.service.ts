@@ -33,7 +33,10 @@ export class PengurusService {
     const role = await this.prisma.role.findFirst({
       where: { level: LEVEL_WARGA, isSystem: true },
     });
-    if (!role) throw new BadRequestException('Peran warga belum tersedia. Jalankan seed database.');
+    if (!role)
+      throw new BadRequestException(
+        'Peran warga belum tersedia. Jalankan seed database.',
+      );
     return role;
   }
 
@@ -53,19 +56,31 @@ export class PengurusService {
       ...kodeRW
         .map((kode) => roles.find((r) => r.kode === kode))
         .filter((role): role is NonNullable<typeof role> => !!role)
-        .map((role) => ({ role, area: 'RW' as Area, jabatan: role.nama })),
+        .map((role) => ({ role, area: 'RW' as const, jabatan: role.nama })),
       ...(roleKetuaRt
-        ? AREA_RT.map((area) => ({ role: roleKetuaRt, area, jabatan: `Ketua ${label(area)}` }))
+        ? AREA_RT.map((area) => ({
+            role: roleKetuaRt,
+            area,
+            jabatan: `Ketua ${label(area)}`,
+          }))
         : []),
     ];
 
     const pemegang = await this.prisma.user.findMany({
       where: { OR: slots.map((s) => ({ roleId: s.role.id, area: s.area })) },
-      select: { namaUser: true, foto: true, kontakPublik: true, roleId: true, area: true },
+      select: {
+        namaUser: true,
+        foto: true,
+        kontakPublik: true,
+        roleId: true,
+        area: true,
+      },
     });
 
     return slots.map((s) => {
-      const p = pemegang.find((x) => x.roleId === s.role.id && x.area === s.area);
+      const p = pemegang.find(
+        (x) => x.roleId === s.role.id && x.area === s.area,
+      );
       return {
         kode: s.role.kode,
         area: s.area,
@@ -88,14 +103,29 @@ export class PengurusService {
     });
     const pemegang = await this.prisma.user.findMany({
       where: { roleId: { in: roles.map((r) => r.id) } },
-      select: { id: true, namaUser: true, username: true, noTelp: true, foto: true, kontakPublik: true, roleId: true, area: true },
+      select: {
+        id: true,
+        namaUser: true,
+        username: true,
+        noTelp: true,
+        foto: true,
+        kontakPublik: true,
+        roleId: true,
+        area: true,
+      },
     });
 
     return roles.flatMap((role) =>
       areaUntukLevel(role.level).map((area) => ({
-        role: { id: role.id, kode: role.kode, nama: role.nama, level: role.level },
+        role: {
+          id: role.id,
+          kode: role.kode,
+          nama: role.nama,
+          level: role.level,
+        },
         area,
-        pemegang: pemegang.find((p) => p.roleId === role.id && p.area === area) ?? null,
+        pemegang:
+          pemegang.find((p) => p.roleId === role.id && p.area === area) ?? null,
       })),
     );
   }
@@ -112,7 +142,11 @@ export class PengurusService {
         namaUser: true,
         username: true,
         area: true,
-        rumah: { where: { isDelete: false }, select: { blokRumah: true }, take: 3 },
+        rumah: {
+          where: { isDelete: false },
+          select: { blokRumah: true },
+          take: 3,
+        },
       },
       orderBy: { namaUser: 'asc' },
     });
@@ -126,11 +160,18 @@ export class PengurusService {
   private async pemegangJabatan(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, namaUser: true, foto: true, role: { select: { level: true } } },
+      select: {
+        id: true,
+        namaUser: true,
+        foto: true,
+        role: { select: { level: true } },
+      },
     });
     if (!user) throw new NotFoundException('Pengurus tidak ditemukan.');
     if (user.role.level === LEVEL_ADMIN || user.role.level === LEVEL_WARGA) {
-      throw new BadRequestException(`${user.namaUser} bukan pemegang jabatan pengurus.`);
+      throw new BadRequestException(
+        `${user.namaUser} bukan pemegang jabatan pengurus.`,
+      );
     }
     return user;
   }
@@ -141,7 +182,10 @@ export class PengurusService {
 
     // Foto pengurus tampil di landing page, jadi bertanda publik (GET /files/:id).
     const fotoId = await this.files.simpan(file, { publik: true });
-    await this.prisma.user.update({ where: { id: user.id }, data: { foto: fotoId } });
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { foto: fotoId },
+    });
     await this.files.hapus(user.foto);
 
     await this.audit.catat(actor.sub, 'pengurus.foto', {
@@ -149,7 +193,10 @@ export class PengurusService {
       targetId: user.id,
       keterangan: `Foto ${user.namaUser} diperbarui`,
     });
-    return { message: `Foto ${user.namaUser} berhasil disimpan.`, foto: fotoId };
+    return {
+      message: `Foto ${user.namaUser} berhasil disimpan.`,
+      foto: fotoId,
+    };
   }
 
   /** Normalisasi ke format 62xxxxxxxxxx (dipakai langsung oleh tautan wa.me). */
@@ -161,7 +208,10 @@ export class PengurusService {
     const user = await this.pemegangJabatan(userId);
     const nomor = kontak ? this.normalisasiNomor(kontak) : null;
 
-    await this.prisma.user.update({ where: { id: user.id }, data: { kontakPublik: nomor } });
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { kontakPublik: nomor },
+    });
 
     await this.audit.catat(actor.sub, 'pengurus.kontak', {
       target: 'User',
@@ -180,9 +230,13 @@ export class PengurusService {
 
   async hapusFoto(actor: AuthUser, userId: number) {
     const user = await this.pemegangJabatan(userId);
-    if (!user.foto) throw new BadRequestException('Pengurus ini belum punya foto.');
+    if (!user.foto)
+      throw new BadRequestException('Pengurus ini belum punya foto.');
 
-    await this.prisma.user.update({ where: { id: user.id }, data: { foto: null } });
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { foto: null },
+    });
     await this.files.hapus(user.foto);
 
     await this.audit.catat(actor.sub, 'pengurus.foto', {
@@ -212,12 +266,18 @@ export class PengurusService {
     await tx.user.update({
       where: { id: userId },
       // kontakPublik dikosongkan: publikasi nomor itu izin untuk jabatan ini, bukan untuk selamanya.
-      data: { roleId: warga.id, area: rumah?.rt ?? areaCadangan, kontakPublik: null },
+      data: {
+        roleId: warga.id,
+        area: rumah?.rt ?? areaCadangan,
+        kontakPublik: null,
+      },
     });
   }
 
   async assign(actor: AuthUser, dto: AssignPengurusDto) {
-    const role = await this.prisma.role.findUnique({ where: { id: dto.roleId } });
+    const role = await this.prisma.role.findUnique({
+      where: { id: dto.roleId },
+    });
     if (!role) throw new NotFoundException('Peran tidak ditemukan.');
     if (role.level === LEVEL_ADMIN || role.level === LEVEL_WARGA) {
       throw new BadRequestException('Peran ini bukan jabatan pengurus.');
@@ -240,7 +300,9 @@ export class PengurusService {
     }
     // Pengurus RT harus warga RT itu sendiri.
     if (role.level === 2 && user.area !== dto.area) {
-      throw new BadRequestException(`${user.namaUser} bukan warga ${label(dto.area)}.`);
+      throw new BadRequestException(
+        `${user.namaUser} bukan warga ${label(dto.area)}.`,
+      );
     }
 
     const warga = await this.roleWarga();
@@ -270,18 +332,28 @@ export class PengurusService {
   }
 
   async vacate(actor: AuthUser, dto: VacatePengurusDto) {
-    const role = await this.prisma.role.findUnique({ where: { id: dto.roleId } });
+    const role = await this.prisma.role.findUnique({
+      where: { id: dto.roleId },
+    });
     if (!role) throw new NotFoundException('Peran tidak ditemukan.');
 
     const pemegang = await this.prisma.user.findFirst({
       where: { roleId: role.id, area: dto.area },
       select: { id: true, namaUser: true },
     });
-    if (!pemegang) throw new BadRequestException('Jabatan ini memang belum ada pemegangnya.');
+    if (!pemegang)
+      throw new BadRequestException(
+        'Jabatan ini memang belum ada pemegangnya.',
+      );
 
     const warga = await this.roleWarga();
     await this.prisma.$transaction((tx) =>
-      this.kembalikanJadiWarga(tx, pemegang.id, warga, dto.area === 'RW' ? null : dto.area),
+      this.kembalikanJadiWarga(
+        tx,
+        pemegang.id,
+        warga,
+        dto.area === 'RW' ? null : dto.area,
+      ),
     );
 
     await this.audit.catat(actor.sub, 'pengurus.kosongkan', {
@@ -289,6 +361,8 @@ export class PengurusService {
       targetId: pemegang.id,
       keterangan: `${pemegang.namaUser} dilepas dari ${role.nama} ${label(dto.area)}`,
     });
-    return { message: `${pemegang.namaUser} dilepas dari jabatan ${role.nama} ${label(dto.area)}.` };
+    return {
+      message: `${pemegang.namaUser} dilepas dari jabatan ${role.nama} ${label(dto.area)}.`,
+    };
   }
 }

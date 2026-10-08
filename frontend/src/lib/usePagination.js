@@ -13,6 +13,9 @@ export function usePagination(items, resetKeys = [], pageSize = DEFAULT_PAGE_SIZ
 
   // Reset ke halaman pertama saat filter/pencarian berubah
   // (pola yang sama dipakai PublikasiManager untuk PAGE_SIZE 10).
+  // resetKeys datang dari parameter (bukan array literal di tempat), jadi ESLint
+  // tidak bisa memverifikasi isinya secara statis — tapi React tetap membandingkan
+  // tiap elemennya per-render seperti biasa, jadi perilakunya tetap benar.
   useEffect(() => {
     setPage(1);
   }, resetKeys);

@@ -27,7 +27,8 @@ export class AuthService {
 
   async login(identifier: string, password: string, remember = false) {
     const id = identifier?.trim();
-    if (!id || !password) throw new UnauthorizedException(INVALID_CREDENTIALS_MSG);
+    if (!id || !password)
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MSG);
 
     // Login utama pakai username (default no HP); email tetap diterima bila ada.
     const user = await this.prisma.user.findFirst({
@@ -72,13 +73,21 @@ export class AuthService {
     };
   }
 
-  async gantiPassword(userId: number, passwordLama: string, passwordBaru: string) {
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+  async gantiPassword(
+    userId: number,
+    passwordLama: string,
+    passwordBaru: string,
+  ) {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
 
     const valid = await bcrypt.compare(passwordLama, user.password);
     if (!valid) throw new BadRequestException('Kata sandi lama salah.');
     if (passwordBaru === passwordLama) {
-      throw new BadRequestException('Kata sandi baru harus berbeda dari kata sandi lama.');
+      throw new BadRequestException(
+        'Kata sandi baru harus berbeda dari kata sandi lama.',
+      );
     }
 
     await this.prisma.user.update({
@@ -88,7 +97,10 @@ export class AuthService {
         wajibGantiPassword: false,
       },
     });
-    await this.audit.catat(userId, 'password.ganti', { target: 'User', targetId: userId });
+    await this.audit.catat(userId, 'password.ganti', {
+      target: 'User',
+      targetId: userId,
+    });
 
     return { message: 'Kata sandi berhasil diganti.' };
   }

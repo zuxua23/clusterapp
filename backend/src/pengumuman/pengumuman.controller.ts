@@ -58,7 +58,9 @@ export class PengumumanController {
   @Public()
   @Get('active')
   findActive(@Query('scope') scope?: string) {
-    return this.pengumumanService.findActive(scope as 'aktif' | 'arsip' | undefined);
+    return this.pengumumanService.findActive(
+      scope as 'aktif' | 'arsip' | undefined,
+    );
   }
 
   @Get(':id')

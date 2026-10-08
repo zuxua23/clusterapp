@@ -16,7 +16,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { CatatanRapatService } from './catatan-rapat.service';
 import { FileService } from '../common/file/file.service';
-import { CreateCatatanRapatDto, UpdateCatatanRapatDto } from './dto/catatan-rapat.dto';
+import {
+  CreateCatatanRapatDto,
+  UpdateCatatanRapatDto,
+} from './dto/catatan-rapat.dto';
 import { catatanRapatMulterOptions } from './catatan-rapat.multer';
 import { Access, RequirePermission } from '../auth/permission.decorators';
 import type { AccessContext } from '../auth/auth.types';
