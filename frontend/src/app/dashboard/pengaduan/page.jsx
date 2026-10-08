@@ -10,6 +10,7 @@ import FilterPopover, { FilterField } from "@/components/ui/FilterPopover";
 import Pagination from "@/components/ui/Pagination";
 import Select from "@/components/ui/Select";
 import { usePagination } from "@/lib/usePagination";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 import PengaduanFormModal from "@/components/pengaduan/PengaduanFormModal";
 import PengaduanDetailModal from "@/components/pengaduan/PengaduanDetailModal";
 import { can, scopeOf, areaLabel } from "@/lib/session";
@@ -176,21 +177,24 @@ function AdminPengaduanView({ user }) {
     setDraftUrutan("prioritas");
   };
 
-  const loadData = async () => {
-    setIsLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const data = await pengaduanApi.getAll();
       setItems(data || []);
     } catch (err) {
-      showMessage("Gagal Memuat Data", err.message, "error");
+      if (!silent) showMessage("Gagal Memuat Data", err.message, "error");
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
   useEffect(() => {
     loadData();
   }, []);
+
+  // Refetch berkala biar pengaduan baru dari warga langsung kelihatan tanpa reload manual.
+  useAutoRefresh(() => loadData(true));
 
   const currentUserName = user?.nama || user?.name || "Admin";
   const bolehRespon = can(user, "pengaduan.respon");
@@ -458,17 +462,20 @@ function WargaPengaduanView({ user }) {
     setDraftUrutan("terbaru");
   };
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const data = await pengaduanApi.getByUser(user.id);
       setItems(data || []);
     } catch (err) {
-      showMessage("Gagal Memuat Data", err.message, "error");
+      if (!silent) showMessage("Gagal Memuat Data", err.message, "error");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
+
+  // Refetch berkala biar status/tanggapan terbaru langsung kelihatan tanpa reload manual.
+  useAutoRefresh(() => loadData(true));
 
   useEffect(() => {
     loadData();

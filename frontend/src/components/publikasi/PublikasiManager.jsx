@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { areaLabel, can } from "@/lib/session";
 import { useUser } from "@/lib/useUser";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 import { showConfirm, showMessage } from "@/lib/message";
 import Select from "@/components/ui/Select";
 import {
@@ -71,15 +72,15 @@ export default function PublikasiManager({
   const bisaUbahStatusMenu = can(user, `${menu}.update`);
   const lihatSemuaWilayah = user?.permissions?.[`${menu}.read`] === "ALL";
 
-  const loadData = async () => {
-    setIsLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const data = await api.getAll();
       setItems(Array.isArray(data) ? data : []);
     } catch (error) {
-      showMessage("Gagal Memuat Data", error.message, "error");
+      if (!silent) showMessage("Gagal Memuat Data", error.message, "error");
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
@@ -87,6 +88,11 @@ export default function PublikasiManager({
     if (ready && user) loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, user?.id]);
+
+  // Refetch berkala (pengumuman/kegiatan baru dari sesama pengurus langsung kelihatan).
+  useAutoRefresh(() => {
+    if (ready && user) loadData(true);
+  });
 
   useEffect(() => {
     setPage(1);
