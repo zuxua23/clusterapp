@@ -10,6 +10,12 @@ import { Area, ScopeAkses, TipeNotifikasi } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
 
+const punyaPermission = (kode: string, scope: ScopeAkses[]) => ({
+  role: {
+    permissions: { some: { permission: { kode }, scope: { in: scope } } },
+  },
+});
+
 const RETENSI_SETELAH_DIBACA_MS = 24 * 60 * 60 * 1000; // 1 hari
 
 @Injectable()
@@ -102,21 +108,15 @@ export class NotifikasiService implements OnApplicationBootstrap {
     link?: string,
     kecualiUserId?: number,
   ) {
-    const punyaPermission = (scope: ScopeAkses[]) => ({
-      role: {
-        permissions: { some: { permission: { kode }, scope: { in: scope } } },
-      },
-    });
-
     const seluruhRw = !area || area === 'RW';
     const users = await this.prisma.user.findMany({
       where: {
         ...(kecualiUserId !== undefined && { id: { not: kecualiUserId } }),
         OR: seluruhRw
-          ? [punyaPermission(['ALL', 'AREA', 'OWN'])]
+          ? [punyaPermission(kode, ['ALL', 'AREA', 'OWN'])]
           : [
-              punyaPermission(['ALL']),
-              { area, ...punyaPermission(['AREA', 'OWN']) },
+              punyaPermission(kode, ['ALL']),
+              { area, ...punyaPermission(kode, ['AREA', 'OWN']) },
             ],
       },
       select: { id: true },
@@ -140,17 +140,12 @@ export class NotifikasiService implements OnApplicationBootstrap {
     link?: string,
     kecualiUserId?: number,
   ) {
-    const punyaPermission = (scope: ScopeAkses[]) => ({
-      role: {
-        permissions: { some: { permission: { kode }, scope: { in: scope } } },
-      },
-    });
     const users = await this.prisma.user.findMany({
       where: {
         ...(kecualiUserId !== undefined && { id: { not: kecualiUserId } }),
         OR: [
-          punyaPermission(['ALL']),
-          { area, ...punyaPermission(['AREA', 'OWN']) },
+          punyaPermission(kode, ['ALL']),
+          { area, ...punyaPermission(kode, ['AREA', 'OWN']) },
         ],
       },
       select: { id: true },

@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import compression from 'compression';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import {
   PesanIndonesiaFilter,
@@ -19,13 +20,38 @@ const DEV_ORIGINS = [
 // Preview deployment Vercel dapat subdomain unik tiap deploy.
 const POLA_VERCEL = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
 
+function cekKonfigurasi(isProd: boolean) {
+  const secret = process.env.JWT_SECRET ?? '';
+  if (secret.length < 32) {
+    const pesan =
+      'JWT_SECRET wajib diisi minimal 32 karakter acak (mis. `openssl rand -hex 32`).';
+    const log = new Logger('Config');
+    if (isProd) log.error(`TIDAK AMAN: ${pesan}`);
+    else log.warn(pesan);
+  }
+}
+
 async function bootstrap() {
+  const isProd = process.env.NODE_ENV === 'production';
+  cekKonfigurasi(isProd);
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger('CORS');
 
+  // Di belakang reverse proxy (Railway/Render/Nginx) set TRUST_PROXY=1 supaya rate limit membaca IP asli.
+  if (process.env.TRUST_PROXY)
+    app.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
+
+  app.use(
+    helmet({
+      // File (/files/:id) dipakai frontend yang beda domain.
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      // API tidak menyajikan HTML; CSP dimatikan supaya viewer PDF bawaan browser tetap jalan.
+      contentSecurityPolicy: false,
+    }),
+  );
   app.use(compression());
 
-  const isProd = process.env.NODE_ENV === 'production';
   const originEnv = (process.env.CORS_ORIGINS || '')
     .split(',')
     .map((o) => o.trim())

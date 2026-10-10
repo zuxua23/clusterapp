@@ -9,11 +9,10 @@ import {
   Delete,
   UploadedFile,
   UseInterceptors,
-  UseGuards,
   Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { WargaService } from './warga.service';
 import { CreateWargaDto } from './dto/create-warga.dto';
 import { UpdateWargaDto } from './dto/update-warga.dto';
@@ -168,7 +167,7 @@ export class WargaController {
 
   /** Publik: warga daftar akun sendiri, masuk status Menunggu Persetujuan. */
   @Public()
-  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('daftar')
   daftarMandiri(@Body() dto: DaftarMandiriDto) {
     return this.wargaService.daftarMandiri(dto);

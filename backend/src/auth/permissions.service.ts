@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ScopeAkses } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from './auth.types';
+import { sidikPassword } from './sidik-password';
 
 /** Cache hak akses & user login di memori supaya tidak query DB di tiap request. */
 @Injectable()
@@ -13,14 +14,18 @@ export class PermissionsService {
     number,
     { at: number; grants: Map<string, ScopeAkses> }
   >();
-  private userCache = new Map<number, { at: number; user: AuthUser }>();
+  private userCache = new Map<
+    number,
+    { at: number; sesi: { user: AuthUser; pv: string } }
+  >();
 
   constructor(private prisma: PrismaService) {}
 
-  async userById(id: number): Promise<AuthUser | null> {
+  /** User login + sidik password-nya (untuk mencocokkan token). */
+  async sesiUser(id: number): Promise<{ user: AuthUser; pv: string } | null> {
     const cached = this.userCache.get(id);
     if (cached && Date.now() - cached.at < PermissionsService.USER_TTL_MS)
-      return cached.user;
+      return cached.sesi;
 
     const row = await this.prisma.user.findUnique({
       where: { id },
@@ -30,6 +35,7 @@ export class PermissionsService {
         namaUser: true,
         area: true,
         roleId: true,
+        password: true,
         role: { select: { kode: true } },
       },
     });
@@ -45,8 +51,9 @@ export class PermissionsService {
       roleId: row.roleId,
       area: row.area,
     };
-    this.userCache.set(id, { at: Date.now(), user });
-    return user;
+    const sesi = { user, pv: sidikPassword(row.password) };
+    this.userCache.set(id, { at: Date.now(), sesi });
+    return sesi;
   }
 
   invalidateUser(id?: number) {

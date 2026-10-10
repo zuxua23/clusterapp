@@ -4,8 +4,9 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { KeyRound, X } from "lucide-react";
 import { authApi } from "@/lib/api";
-import { getUser, saveUser } from "@/lib/session";
+import { getUser, isRemembered, saveUser, setToken } from "@/lib/session";
 import { showMessage } from "@/lib/message";
+import { PASSWORD_MIN, isValidPassword } from "@/lib/validators";
 
 /**
  * Ganti password. Mode `wajib`: muncul otomatis saat login pertama dengan password
@@ -21,15 +22,19 @@ export default function GantiPasswordModal({ wajib = false, onClose, onSuccess }
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (form.passwordBaru.length < 6) return setError("Kata sandi baru minimal 6 karakter.");
+    if (!isValidPassword(form.passwordBaru)) return setError(`Kata sandi baru minimal ${PASSWORD_MIN} karakter.`);
     if (form.passwordBaru !== form.konfirmasi) return setError("Konfirmasi kata sandi tidak sama.");
 
     setIsSaving(true);
     try {
-      await authApi.gantiPassword({
+      const remember = isRemembered();
+      const res = await authApi.gantiPassword({
         passwordLama: form.passwordLama,
         passwordBaru: form.passwordBaru,
+        remember,
       });
+      // Token lama otomatis batal setelah ganti kata sandi; pakai token baru.
+      if (res?.token) setToken(res.token, remember);
       const user = getUser();
       if (user) saveUser({ ...user, wajibGantiPassword: false });
       await showMessage("Berhasil", "Kata sandi berhasil diganti.", "success");
@@ -97,10 +102,10 @@ export default function GantiPasswordModal({ wajib = false, onClose, onSuccess }
                 value={form.passwordBaru}
                 onChange={handleChange}
                 autoComplete="new-password"
-                minLength={6}
+                minLength={PASSWORD_MIN}
                 required
               />
-              <span className="field-hint">Minimal 6 karakter.</span>
+              <span className="field-hint">Minimal {PASSWORD_MIN} karakter.</span>
             </div>
             <div className="form-group">
               <label htmlFor="konfirmasi">

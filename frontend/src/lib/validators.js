@@ -7,7 +7,9 @@ export const isValidPhoneNumber = (value) =>
 export const isValidEmail = (value) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 
-export const isValidPassword = (value) => value.length >= 6;
+export const PASSWORD_MIN = 8;
+
+export const isValidPassword = (value) => value.length >= PASSWORD_MIN;
 
 export const PHONE_MAX_LENGTH = 13;
 

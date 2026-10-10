@@ -17,6 +17,7 @@ import {
   currentYm,
   resolvePeriode,
   ymRangeToDates,
+  labelBulan,
 } from '../common/periode.helper';
 
 const SEMUA_AREA: Area[] = ['RW', 'RT_01', 'RT_02', 'RT_03', 'RT_04'];
@@ -260,20 +261,6 @@ export class KeuanganService {
 
       // group by RT + period (YYYY-MM) -> 1 baris/bulan/RT.
       // Rumah KOSONG: porsi IPL dialihkan ke kas RT, kontribusinya = IPL + Kas.
-      const BULAN_LABEL: Record<string, string> = {
-        '01': 'Jan',
-        '02': 'Feb',
-        '03': 'Mar',
-        '04': 'Apr',
-        '05': 'Mei',
-        '06': 'Jun',
-        '07': 'Jul',
-        '08': 'Agu',
-        '09': 'Sep',
-        '10': 'Okt',
-        '11': 'Nov',
-        '12': 'Des',
-      };
       const groups = new Map<
         string,
         {
@@ -304,7 +291,7 @@ export class KeuanganService {
       }
       for (const [key, g] of groups) {
         if (g.total === 0) continue;
-        const label = `${BULAN_LABEL[g.bulan] || g.bulan} ${g.tahun}`;
+        const label = `${labelBulan(g.bulan)} ${g.tahun}`;
         const keterangan = `Kas RT (${label})`;
         const searchOk =
           !search ||
@@ -382,20 +369,6 @@ export class KeuanganService {
           },
         },
       });
-      const BULAN_LABEL2: Record<string, string> = {
-        '01': 'Jan',
-        '02': 'Feb',
-        '03': 'Mar',
-        '04': 'Apr',
-        '05': 'Mei',
-        '06': 'Jun',
-        '07': 'Jul',
-        '08': 'Agu',
-        '09': 'Sep',
-        '10': 'Okt',
-        '11': 'Nov',
-        '12': 'Des',
-      };
       const sGroups = new Map<
         string,
         {
@@ -441,7 +414,7 @@ export class KeuanganService {
       }
       for (const g of sGroups.values()) {
         if (g.total === 0) continue;
-        const label = `${BULAN_LABEL2[g.bulan] || g.bulan} ${g.tahun}`;
+        const label = `${labelBulan(g.bulan)} ${g.tahun}`;
         const keterangan = `Setoran IPL ${labelRt(g.rt)} - ${label}`;
         const searchHay =
           `${keterangan} Setor IPL ${labelRt(g.rt)} ${label}`.toLowerCase();
@@ -857,14 +830,6 @@ export class KeuanganService {
           },
         }
       : tanpaRw;
-    const setorRtSajaAll = setorRtList.length
-      ? {
-          rumah: {
-            rt: { in: setorRtList },
-            status: { not: 'KOSONG' as const },
-          },
-        }
-      : tanpaRw;
 
     // Kontribusi kas RT per tagihan: rumah KOSONG menyumbang IPL + Kas
     // (porsi IPL-nya dialihkan ke kas RT, tidak disetor ke RW).
@@ -912,7 +877,7 @@ export class KeuanganService {
         select: { nominalIpl: true, bulanPeriode: true, tahunPeriode: true },
       }),
       this.prisma.ipl.findMany({
-        where: { setoran: { status: 'DIKONFIRMASI' }, ...setorRtSajaAll },
+        where: { setoran: { status: 'DIKONFIRMASI' }, ...setorRtSaja },
         select: { nominalIpl: true },
       }),
       this.prisma.kasTransaksi.findMany({

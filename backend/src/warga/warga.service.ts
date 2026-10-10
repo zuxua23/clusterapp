@@ -21,7 +21,7 @@ import { FileService } from '../common/file/file.service';
 import { SALT_ROUNDS } from '../auth/auth.service';
 import { AccessContext } from '../auth/auth.types';
 import { PermissionsService } from '../auth/permissions.service';
-import { resolvePeriode } from '../common/periode.helper';
+import { labelBulan, resolvePeriode } from '../common/periode.helper';
 import {
   areaFilter,
   assertInArea,
@@ -61,21 +61,6 @@ export interface RingkasanPeriode {
   menunggu: number;
   rumah: RingkasanRumah[];
 }
-
-const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'Mei',
-  'Jun',
-  'Jul',
-  'Agu',
-  'Sep',
-  'Okt',
-  'Nov',
-  'Des',
-];
 
 const RUMAH_SELECT = {
   id: true,
@@ -278,11 +263,10 @@ export class WargaService {
     for (const t of tagihan) {
       const key = `${t.bulanPeriode}/${t.tahunPeriode}`;
       if (!summaryByPeriode[key]) {
-        const m = parseInt(t.bulanPeriode, 10);
         summaryByPeriode[key] = {
           bulan: t.bulanPeriode,
           tahun: t.tahunPeriode,
-          label: `${MONTHS[m - 1] || t.bulanPeriode} ${t.tahunPeriode}`,
+          label: `${labelBulan(t.bulanPeriode)} ${t.tahunPeriode}`,
           totalNominal: 0,
           totalTagihan: 0,
           lunas: 0,
@@ -634,6 +618,7 @@ export class WargaService {
         wajibGantiPassword: true,
       },
     });
+    this.permissions.invalidateUser(id);
     await this.audit.catat(ctx.user.sub, 'warga.reset_password', {
       target: 'User',
       targetId: id,
@@ -929,7 +914,21 @@ export class WargaService {
           ? status
           : 'PENDING') as StatusPendaftaran,
       },
-      include: { rumah: { select: { id: true, blokRumah: true, rt: true } } },
+      // Tanpa kolom password (hash) — jangan pernah dikirim ke klien.
+      select: {
+        id: true,
+        namaUser: true,
+        noTelp: true,
+        email: true,
+        rt: true,
+        rumahId: true,
+        status: true,
+        alasanTolak: true,
+        diprosesOleh: true,
+        diprosesAt: true,
+        createdAt: true,
+        rumah: { select: { id: true, blokRumah: true, rt: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }

@@ -8,6 +8,10 @@ export const LEVEL_WARGA = 3;
 export const BLOK_RUMAH_REGEX = /^E\d{1,2}\/\d{1,2}$/;
 export const BLOK_RUMAH_MESSAGE = 'Format blok rumah harus seperti E7/15';
 
+// Tolak < dan > di nama supaya tidak bisa disisipi HTML/script.
+export const NAMA_REGEX = /^[^<>]+$/;
+export const NAMA_MESSAGE = 'Nama tidak boleh berisi karakter < atau >.';
+
 // Tanpa 0/O, 1/l/I supaya mudah dibacakan ke warga.
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 

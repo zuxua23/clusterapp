@@ -7,6 +7,7 @@ import AuthShell from "@/components/auth/AuthShell";
 import RegisterStepper from "@/components/auth/RegisterStepper";
 import { showMessage } from "@/lib/message";
 import { wargaApi } from "@/lib/api";
+import { PASSWORD_MIN, isValidPassword } from "@/lib/validators";
 
 export default function AkunPage() {
   const router = useRouter();
@@ -47,8 +48,8 @@ export default function AkunPage() {
       return;
     }
 
-    if (accountData.password.length < 6) {
-      showMessage("Kata Sandi Terlalu Pendek", "Kata sandi minimal 6 karakter.", "warning");
+    if (!isValidPassword(accountData.password)) {
+      showMessage("Kata Sandi Terlalu Pendek", `Kata sandi minimal ${PASSWORD_MIN} karakter.`, "warning");
       return;
     }
     if (accountData.password !== accountData.confirmPassword) {
@@ -117,7 +118,7 @@ export default function AkunPage() {
                     className="form-control with-icon with-toggle"
                     value={accountData.password}
                     onChange={handleChange}
-                    minLength={6}
+                    minLength={PASSWORD_MIN}
                   />
                   <button
                     type="button"

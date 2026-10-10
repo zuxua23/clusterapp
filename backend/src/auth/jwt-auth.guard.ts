@@ -32,10 +32,9 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Token tidak ditemukan.');
     }
 
-    let sub: number;
+    let payload: { sub: number; pv?: string };
     try {
-      const payload = await this.jwtService.verifyAsync<{ sub: number }>(token);
-      sub = payload.sub;
+      payload = await this.jwtService.verifyAsync(token);
     } catch {
       throw new UnauthorizedException(
         'Token tidak valid atau sudah kedaluwarsa.',
@@ -44,11 +43,16 @@ export class JwtAuthGuard implements CanActivate {
 
     // Role & area dibaca dari DB (di-cache singkat), bukan dari token, supaya
     // perubahan jabatan oleh admin cepat berlaku.
-    const user = await this.permissions.userById(sub);
-    if (!user) {
+    const sesi = await this.permissions.sesiUser(payload.sub);
+    if (!sesi) {
       throw new UnauthorizedException('Akun tidak ditemukan.');
     }
-    request.user = user;
+    if (payload.pv !== sesi.pv) {
+      throw new UnauthorizedException(
+        'Kata sandi sudah diganti. Silakan masuk kembali.',
+      );
+    }
+    request.user = sesi.user;
     return true;
   }
 

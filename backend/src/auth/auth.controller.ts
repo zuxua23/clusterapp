@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import {
   IsBoolean,
   IsNotEmpty,
@@ -6,7 +6,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 import { CurrentUser } from './permission.decorators';
@@ -38,16 +38,22 @@ class GantiPasswordDto {
   passwordLama!: string;
 
   @IsString()
-  @MinLength(6, { message: 'Kata sandi baru minimal 6 karakter' })
+  @MinLength(8, { message: 'Kata sandi baru minimal 8 karakter' })
   passwordBaru!: string;
+
+  @IsOptional()
+  @IsBoolean()
+  remember?: boolean;
 }
+
+const BATAS_KETAT = { default: { limit: 5, ttl: 60_000 } };
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
-  @UseGuards(ThrottlerGuard)
+  @Throttle(BATAS_KETAT)
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(
@@ -63,12 +69,14 @@ export class AuthController {
     return this.authService.profile(user.sub);
   }
 
+  @Throttle(BATAS_KETAT)
   @Post('ganti-password')
   gantiPassword(@CurrentUser() user: AuthUser, @Body() dto: GantiPasswordDto) {
     return this.authService.gantiPassword(
       user.sub,
       dto.passwordLama,
       dto.passwordBaru,
+      dto.remember === true,
     );
   }
 }

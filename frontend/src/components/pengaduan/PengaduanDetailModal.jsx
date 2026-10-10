@@ -3,6 +3,7 @@
 import { MessageCircle, Forward } from "lucide-react";
 import { pengaduanApi } from "@/lib/api";
 import { areaLabel } from "@/lib/session";
+import ProtectedImage from "@/components/ui/ProtectedImage";
 import { formatTanggalPanjang as formatDate } from "@/lib/format";
 
 const KATEGORI_LABELS = {
@@ -32,11 +33,7 @@ export default function PengaduanDetailModal({ pengaduan, onClose }) {
         </div>
         <div className="ipl-modal-body">
           {pengaduan.fotoUrl && (
-            <img
-              src={pengaduanApi.imageUrl(pengaduan.fotoUrl)}
-              alt={pengaduan.judul}
-              style={{ width: "100%", borderRadius: 12, maxHeight: 260, objectFit: "cover" }}
-            />
+            <ProtectedImage path={pengaduanApi.fotoPath(pengaduan.id)} alt={pengaduan.judul} className="review-bukti-img" />
           )}
 
           <div className="review-info-grid">

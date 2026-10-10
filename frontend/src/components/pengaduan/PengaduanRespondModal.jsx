@@ -6,6 +6,7 @@ import { pengaduanApi } from "@/lib/api";
 import { showMessage } from "@/lib/message";
 import { areaLabel } from "@/lib/session";
 import Select from "@/components/ui/Select";
+import ProtectedImage from "@/components/ui/ProtectedImage";
 import { formatTanggalPendek as formatDate } from "@/lib/format";
 
 const KATEGORI_LABELS = {
@@ -50,7 +51,6 @@ export default function PengaduanRespondModal({ pengaduan, currentUserName, onCl
     }
   };
 
-  const buktiUrl = pengaduan.fotoUrl ? pengaduanApi.imageUrl(pengaduan.fotoUrl) : null;
 
   return (
     <div className="ipl-modal-overlay" onClick={onClose}>
@@ -100,12 +100,10 @@ export default function PengaduanRespondModal({ pengaduan, currentUserName, onCl
             <p className="review-desc-text">{pengaduan.deskripsi}</p>
           </div>
 
-          {buktiUrl && (
+          {pengaduan.fotoUrl && (
             <div className="review-bukti-section">
               <p className="review-bukti-label">Foto Kendala</p>
-              <a href={buktiUrl} target="_blank" rel="noopener noreferrer">
-                <img src={buktiUrl} alt="Foto kendala" className="review-bukti-img" />
-              </a>
+              <ProtectedImage path={pengaduanApi.fotoPath(pengaduan.id)} alt="Foto kendala" className="review-bukti-img" />
             </div>
           )}
 

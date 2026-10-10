@@ -5,11 +5,17 @@ import {
   IsOptional,
   IsString,
   Matches,
+  MaxLength,
   MinLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { RT, StatusRumah } from '@prisma/client';
-import { BLOK_RUMAH_MESSAGE, BLOK_RUMAH_REGEX } from '../../common/helpers';
+import {
+  BLOK_RUMAH_MESSAGE,
+  BLOK_RUMAH_REGEX,
+  NAMA_MESSAGE,
+  NAMA_REGEX,
+} from '../../common/helpers';
 
 const blank = ({ value }: { value: unknown }) =>
   value === '' ? undefined : value;
@@ -17,6 +23,8 @@ const blank = ({ value }: { value: unknown }) =>
 export class CreateWargaDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
+  @Matches(NAMA_REGEX, { message: NAMA_MESSAGE })
   nama!: string;
 
   @IsString()
@@ -48,7 +56,7 @@ export class CreateWargaDto {
   /** Kosong = dibuatkan otomatis dan dikembalikan sekali di response. */
   @IsOptional()
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
   @Transform(blank)
   password?: string;
 

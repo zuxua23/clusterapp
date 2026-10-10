@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { isValidBlokRumah, sanitizePhoneInput } from "@/lib/validators";
+import { PASSWORD_MIN, isValidBlokRumah, sanitizePhoneInput } from "@/lib/validators";
 import Select from "@/components/ui/Select";
 
 const ALL_RT = ["RT_01", "RT_02", "RT_03", "RT_04"];
@@ -250,7 +250,7 @@ export default function WargaFormModal({
                 placeholder={isEdit ? "Kosongkan bila tidak diubah" : "Kosongkan = dibuatkan otomatis"}
                 value={form.password}
                 onChange={handleChange}
-                minLength={6}
+                minLength={PASSWORD_MIN}
                 autoComplete="new-password"
               />
               <span className="field-hint">Warga wajib menggantinya saat masuk pertama kali.</span>

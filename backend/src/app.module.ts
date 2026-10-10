@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -29,8 +29,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ConfigModule.forRoot({ isGlobal: true }),
     // Job auto-teruskan pengaduan RT yang tidak ditanggapi 7 hari (PengaduanService).
     ScheduleModule.forRoot(),
-    // Dipasang per-endpoint via @Throttle di login & registrasi mandiri (rawan brute-force/spam).
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 5 }]),
+    // Batas umum per IP; endpoint rawan brute-force diperketat via @Throttle.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 300 }]),
     PrismaModule,
     FileModule,
     AuditModule,
@@ -51,7 +51,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
   controllers: [AppController],
   providers: [
     AppService,
-    // Urutan penting: login dulu (JwtAuthGuard), baru cek permission (PermissionGuard).
+    // Urutan penting: rate limit, login (JwtAuthGuard), lalu permission.
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: PermissionGuard },
   ],

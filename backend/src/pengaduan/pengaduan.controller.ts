@@ -6,10 +6,13 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
+import { FileService } from '../common/file/file.service';
 import { CreatePengaduanDto } from './dto/create-pengaduan.dto';
 import { RespondPengaduanDto } from './dto/respond-pengaduan.dto';
 import { pengaduanMulterOptions } from './pengaduan.multer';
@@ -23,7 +26,10 @@ import type { AccessContext, AuthUser } from '../auth/auth.types';
 
 @Controller('pengaduan')
 export class PengaduanController {
-  constructor(private readonly pengaduanService: PengaduanService) {}
+  constructor(
+    private readonly pengaduanService: PengaduanService,
+    private readonly files: FileService,
+  ) {}
 
   /**
    * Sengaja tanpa @RequirePermission: pemegang `pengaduan.create_rw` ATAU
@@ -60,6 +66,19 @@ export class PengaduanController {
   @Get('tujuan')
   getTujuanPilihan(@CurrentUser() user: AuthUser) {
     return this.pengaduanService.getTujuanPilihan(user);
+  }
+
+  @Get(':id/foto')
+  @RequirePermission('pengaduan', 'read')
+  async foto(
+    @Access() ctx: AccessContext,
+    @Param('id', ParseIntPipe) id: number,
+    @Res() res: Response,
+  ) {
+    await this.files.kirim(
+      res,
+      await this.pengaduanService.fileIdFoto(ctx, id),
+    );
   }
 
   @Get(':id')

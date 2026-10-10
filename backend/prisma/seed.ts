@@ -16,9 +16,17 @@ import { MATRIX, PERMISSIONS, ROLES } from './rbac-data';
 const prisma = new PrismaClient();
 const SALT_ROUNDS = 10;
 
-const PASSWORD_ADMIN = 'admin1234';
-const PASSWORD_PENGURUS = 'Pengurus@123';
-const PASSWORD_WARGA = 'warga123';
+// Password default hanya untuk development; di production wajib diisi lewat env.
+function passwordSeed(env: string, dev: string) {
+  const nilai = process.env[env];
+  if (nilai) return nilai;
+  if (process.env.NODE_ENV === 'production')
+    throw new Error(`${env} wajib diisi untuk seed di production.`);
+  return dev;
+}
+const PASSWORD_ADMIN = passwordSeed('SEED_PASSWORD_ADMIN', 'admin1234');
+const PASSWORD_PENGURUS = passwordSeed('SEED_PASSWORD_PENGURUS', 'Pengurus@123');
+const PASSWORD_WARGA = passwordSeed('SEED_PASSWORD_WARGA', 'warga123');
 
 // 1. RBAC — role, permission, matriks. Idempotent; aman dijalankan ulang.
 //    Setelah pertama kali di-seed, matriks diatur admin lewat menu; seed ini

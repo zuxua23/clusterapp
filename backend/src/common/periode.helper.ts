@@ -87,3 +87,22 @@ export function currentYm() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
+
+const BULAN_PENDEK = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'Mei',
+  'Jun',
+  'Jul',
+  'Agu',
+  'Sep',
+  'Okt',
+  'Nov',
+  'Des',
+];
+
+/** "01" -> "Jan"; nilai tak dikenal dikembalikan apa adanya. */
+export const labelBulan = (bulan: string) =>
+  BULAN_PENDEK[Number(bulan) - 1] ?? bulan;

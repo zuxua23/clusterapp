@@ -10,10 +10,9 @@ import {
   Put,
   Query,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Area } from '@prisma/client';
 import { pengurusMulterOptions } from './pengurus.multer';
@@ -107,7 +106,6 @@ export class PengurusController {
    * cukup untuk pengunjung biasa (satu kali muat per halaman) tapi menyulitkan scraping massal.
    */
   @Public()
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @Get('publik')
   publik() {

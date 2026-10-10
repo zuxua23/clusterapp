@@ -36,8 +36,8 @@ export default function PendaftaranPage() {
 
   const handleSetujuiPendaftaran = async (item) => {
     const { value: statusHunian } = await Swal.fire({
-      title: `Setujui pendaftaran ${item.namaUser}?`,
-      html: `Akun warga akan dibuat untuk blok ${item.rumah?.blokRumah}.`,
+      titleText: `Setujui pendaftaran ${item.namaUser}?`,
+      text: `Akun warga akan dibuat untuk blok ${item.rumah?.blokRumah}.`,
       input: "radio",
       inputLabel: "Status hunian rumah",
       inputOptions: {
@@ -62,7 +62,7 @@ export default function PendaftaranPage() {
 
   const handleTolakPendaftaran = async (item) => {
     const { value: alasan } = await Swal.fire({
-      title: `Tolak pendaftaran ${item.namaUser}?`,
+      titleText: `Tolak pendaftaran ${item.namaUser}?`,
       input: "textarea",
       inputLabel: "Alasan penolakan",
       inputPlaceholder: "Contoh: data tidak sesuai, atau rumah sudah dihuni warga lain",

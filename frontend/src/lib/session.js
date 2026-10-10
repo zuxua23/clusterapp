@@ -42,6 +42,12 @@ export function setToken(token, remember) {
   }
 }
 
+/** Sesi tersimpan permanen ("Ingat saya" / PWA)? */
+export function isRemembered() {
+  if (typeof window === "undefined") return false;
+  return !!localStorage.getItem(TOKEN_KEY);
+}
+
 export function clearSession() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(USER_KEY);

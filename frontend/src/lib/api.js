@@ -105,8 +105,8 @@ export const authApi = {
   login: ({ username, password, remember }) =>
     request("/auth/login", json("POST", { username, password, remember: remember === true })),
   me: () => request("/auth/me"),
-  gantiPassword: ({ passwordLama, passwordBaru }) =>
-    request("/auth/ganti-password", json("POST", { passwordLama, passwordBaru })),
+  gantiPassword: ({ passwordLama, passwordBaru, remember }) =>
+    request("/auth/ganti-password", json("POST", { passwordLama, passwordBaru, remember: remember === true })),
 };
 
 // ── Pengumuman & Kegiatan (per area, dengan alur pengajuan ke RW) ───────
@@ -293,7 +293,7 @@ export const pengaduanApi = {
   getTujuanPilihan: () => request("/pengaduan/tujuan"),
   create: (payload) => request("/pengaduan", { method: "POST", body: buildFormData(payload) }),
   respond: (id, payload) => request(`/pengaduan/${id}/respond`, json("PATCH", payload)),
-  imageUrl: fileUrl,
+  fotoPath: (id) => `/pengaduan/${id}/foto`,
 };
 
 export const notifikasiApi = {

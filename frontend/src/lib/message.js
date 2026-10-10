@@ -1,9 +1,11 @@
 
 import Swal from 'sweetalert2';
 
+// Selalu `titleText`/`text` (bukan HTML) supaya data dari user tidak bisa menyisipkan script.
+
 export const showMessage = (title, text, icon = 'info') => {
   return Swal.fire({
-    title,
+    titleText: title,
     text,
     icon,
     confirmButtonText: 'OK',
@@ -18,7 +20,7 @@ export const showConfirm = (
   cancelText = 'Batal'
 ) => {
   return Swal.fire({
-    title,
+    titleText: title,
     text,
     icon,
     showCancelButton: true,
@@ -32,7 +34,7 @@ export const showCredentials = ({ title, nama, username, password, catatan }) =>
   const esc = (v) =>
     String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   return Swal.fire({
-    title,
+    titleText: title,
     icon: "success",
     confirmButtonText: "Sudah saya catat",
     html:

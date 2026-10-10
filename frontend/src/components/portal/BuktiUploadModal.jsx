@@ -51,13 +51,14 @@ export default function BuktiUploadModal({ ipl, user, rumah, onClose, onSuccess 
         file,
       });
       await showMessage(
-        "Bukti pembayaran berhasil dikirim!\nAdmin akan mengkonfirmasi dalam 1x24 jam.",
+        "Bukti terkirim",
+        "Pengurus akan mengonfirmasi dalam 1x24 jam.",
         "success"
       );
       onSuccess?.();
       onClose();
     } catch (err) {
-      await showMessage(err.message || "Gagal mengirim bukti pembayaran.", "error");
+      await showMessage("Gagal mengirim", err.message || "Coba lagi.", "error");
     } finally {
       setIsSubmitting(false);
     }

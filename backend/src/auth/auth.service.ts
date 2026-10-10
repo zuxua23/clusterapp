@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { sidikPassword } from './sidik-password';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { PermissionsService } from './permissions.service';
@@ -15,6 +16,9 @@ export const SALT_ROUNDS = 10;
 const REMEMBER_EXPIRES_IN = '30d';
 
 const INVALID_CREDENTIALS_MSG = 'Nama pengguna atau kata sandi salah.';
+
+// Hash dummy supaya login dengan username tak terdaftar butuh waktu sama (tidak bisa dipakai menebak username).
+const DUMMY_HASH = bcrypt.hashSync('dummy-password-tidak-dipakai', SALT_ROUNDS);
 
 @Injectable()
 export class AuthService {
@@ -34,21 +38,29 @@ export class AuthService {
     const user = await this.prisma.user.findFirst({
       where: { OR: [{ username: id }, { email: id }] },
     });
-    if (!user) throw new UnauthorizedException(INVALID_CREDENTIALS_MSG);
-
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) throw new UnauthorizedException(INVALID_CREDENTIALS_MSG);
-
-    const token = await this.jwtService.signAsync(
-      { sub: user.id, username: user.username },
-      remember ? { expiresIn: REMEMBER_EXPIRES_IN } : undefined,
-    );
+    const valid = await bcrypt.compare(password, user?.password ?? DUMMY_HASH);
+    if (!user || !valid)
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MSG);
 
     return {
       message: 'Login berhasil',
-      token,
+      token: await this.buatToken(user, remember),
       user: await this.profile(user.id),
     };
+  }
+
+  private buatToken(
+    user: { id: number; username: string; password: string },
+    remember: boolean,
+  ) {
+    return this.jwtService.signAsync(
+      {
+        sub: user.id,
+        username: user.username,
+        pv: sidikPassword(user.password),
+      },
+      remember ? { expiresIn: REMEMBER_EXPIRES_IN } : undefined,
+    );
   }
 
   /** Profil user + seluruh permission role-nya (dipakai frontend untuk menyusun menu). */
@@ -77,6 +89,7 @@ export class AuthService {
     userId: number,
     passwordLama: string,
     passwordBaru: string,
+    remember = false,
   ) {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -90,18 +103,24 @@ export class AuthService {
       );
     }
 
-    await this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: userId },
       data: {
         password: await bcrypt.hash(passwordBaru, SALT_ROUNDS),
         wajibGantiPassword: false,
       },
+      select: { id: true, username: true, password: true },
     });
+    this.permissions.invalidateUser(userId);
     await this.audit.catat(userId, 'password.ganti', {
       target: 'User',
       targetId: userId,
     });
 
-    return { message: 'Kata sandi berhasil diganti.' };
+    // Token lama ikut batal (sidik password berubah), jadi kirim token baru untuk sesi ini.
+    return {
+      message: 'Kata sandi berhasil diganti.',
+      token: await this.buatToken(updated, remember),
+    };
   }
 }

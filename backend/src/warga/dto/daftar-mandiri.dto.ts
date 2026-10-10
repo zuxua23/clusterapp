@@ -5,10 +5,13 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
+  MaxLength,
   MinLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { RT } from '@prisma/client';
+import { NAMA_MESSAGE, NAMA_REGEX } from '../../common/helpers';
 
 const blank = ({ value }: { value: unknown }) =>
   value === '' ? undefined : value;
@@ -17,6 +20,8 @@ const blank = ({ value }: { value: unknown }) =>
 export class DaftarMandiriDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
+  @Matches(NAMA_REGEX, { message: NAMA_MESSAGE })
   namaUser!: string;
 
   @IsString()
@@ -29,7 +34,7 @@ export class DaftarMandiriDto {
   email?: string;
 
   @IsString()
-  @MinLength(6, { message: 'Kata sandi minimal 6 karakter' })
+  @MinLength(8, { message: 'Kata sandi minimal 8 karakter' })
   password!: string;
 
   @IsEnum(RT)

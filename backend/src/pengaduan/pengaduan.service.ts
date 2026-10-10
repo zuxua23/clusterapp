@@ -128,10 +128,8 @@ export class PengaduanService implements OnApplicationBootstrap {
       );
     }
 
-    // Tampil lewat <img>, yang tidak bisa mengirim token; sama seperti sebelumnya (folder statis).
-    const fotoUrl = file
-      ? await this.files.simpan(file, { publik: true })
-      : undefined;
+    // Privat: diambil lewat GET /pengaduan/:id/foto yang mengecek hak lihat.
+    const fotoUrl = file ? await this.files.simpan(file) : undefined;
     const data = await this.prisma.pengaduan.create({
       data: {
         idUser: user.sub,
@@ -199,6 +197,13 @@ export class PengaduanService implements OnApplicationBootstrap {
       throw new NotFoundException(`Pengaduan dengan ID ${id} tidak ditemukan`);
     }
     return pengaduan;
+  }
+
+  async fileIdFoto(ctx: AccessContext, id: number) {
+    const { fotoUrl } = await this.findOne(ctx, id);
+    if (!fotoUrl)
+      throw new NotFoundException('Pengaduan ini tidak memiliki foto.');
+    return fotoUrl;
   }
 
   async respond(ctx: AccessContext, id: number, dto: RespondPengaduanDto) {
