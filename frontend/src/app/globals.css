@@ -89,17 +89,6 @@ body {
   -webkit-user-select: none;
 }
 
-/* Matikan efek "pull-to-refresh"/bounce glow Chrome pas scroll nyampe ujung atas/bawah —
-   TAPI hanya kalau app sudah di-install (dibuka sebagai PWA standalone), karena di situ
-   kerasa seperti UI browser, bukan app native. Di tab browser biasa pull-to-refresh harus
-   tetap jalan seperti web pada umumnya. */
-@media (display-mode: standalone) {
-  html,
-  body {
-    overscroll-behavior-y: none;
-  }
-}
-
 input,
 textarea,
 [contenteditable="true"] {
