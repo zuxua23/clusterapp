@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { FileService } from '../common/file/file.service';
 import { AuthUser } from '../auth/auth.types';
+import { PermissionsService } from '../auth/permissions.service';
 import { LEVEL_ADMIN, LEVEL_WARGA } from '../common/helpers';
 import { AssignPengurusDto, VacatePengurusDto } from './rbac.dto';
 
@@ -27,6 +28,7 @@ export class PengurusService {
     private prisma: PrismaService,
     private audit: AuditService,
     private files: FileService,
+    private permissions: PermissionsService,
   ) {}
 
   private async roleWarga() {
@@ -319,6 +321,7 @@ export class PengurusService {
         data: { roleId: role.id, area: dto.area },
       });
     });
+    this.permissions.invalidateUser();
 
     await this.audit.catat(actor.sub, 'pengurus.tetapkan', {
       target: 'User',
@@ -355,6 +358,7 @@ export class PengurusService {
         dto.area === 'RW' ? null : dto.area,
       ),
     );
+    this.permissions.invalidateUser(pemegang.id);
 
     await this.audit.catat(actor.sub, 'pengurus.kosongkan', {
       target: 'User',

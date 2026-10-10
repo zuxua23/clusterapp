@@ -1,6 +1,4 @@
-// Service worker minimal: syarat installability (Chrome Android butuh fetch handler
-// terdaftar) + penerima Web Push. Tidak melakukan caching agresif — data di app ini
-// selalu berubah (tagihan, pengaduan, dll), jadi tidak di-cache offline.
+// Service worker minimal: installability + Web Push. Tanpa cache — data selalu berubah.
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -10,9 +8,20 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// Pass-through biasa — disyaratkan Chrome supaya prompt "Install app" muncul.
+const OFFLINE_HTML =
+  '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+  '<title>Offline</title><body style="font-family:sans-serif;text-align:center;padding:48px 24px;color:#334155">' +
+  "<h2>Tidak ada koneksi</h2><p>Periksa internet kamu lalu coba lagi.</p>" +
+  '<button onclick="location.reload()" style="padding:10px 20px;border:0;border-radius:8px;background:#0d9488;color:#fff">Coba lagi</button></body>';
+
+// Hanya navigasi halaman yang ditangani (fallback offline); API & aset dibiarkan langsung ke jaringan.
 self.addEventListener("fetch", (event) => {
-  event.respondWith(fetch(event.request));
+  if (event.request.mode !== "navigate") return;
+  event.respondWith(
+    fetch(event.request).catch(
+      () => new Response(OFFLINE_HTML, { headers: { "Content-Type": "text/html; charset=utf-8" } }),
+    ),
+  );
 });
 
 self.addEventListener("push", (event) => {

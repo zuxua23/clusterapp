@@ -173,6 +173,7 @@ model AuditLog {
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@index([aksi])
+  @@index([createdAt])
   @@map("tb_AuditLog")
 }
 
@@ -274,6 +275,7 @@ model Ipl {
   pembayaran       PembayaranIpl[]
 
   @@index([setoranId])
+  @@index([tahunPeriode, bulanPeriode, statusPembayaran])
   @@map("trx_IPL")
 }
 
@@ -448,6 +450,7 @@ model Notifikasi {
   createdAt DateTime       @default(now())
 
   @@index([isRead, readAt])
+  @@index([idUser, createdAt])
   @@map("tb_Notifikasi")
 }
 
@@ -486,5 +489,6 @@ model KasTransaksi {
   updatedAt  DateTime? @map("updated_at")
 
   @@index([area])
+  @@index([area, tanggal])
   @@map("trx_kas")
 }

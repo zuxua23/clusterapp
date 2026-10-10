@@ -20,6 +20,7 @@ import { AuditService } from '../audit/audit.service';
 import { FileService } from '../common/file/file.service';
 import { SALT_ROUNDS } from '../auth/auth.service';
 import { AccessContext } from '../auth/auth.types';
+import { PermissionsService } from '../auth/permissions.service';
 import { resolvePeriode } from '../common/periode.helper';
 import {
   areaFilter,
@@ -119,18 +120,14 @@ export class WargaService {
     private notifikasiService: NotifikasiService,
     private audit: AuditService,
     private files: FileService,
+    private permissions: PermissionsService,
   ) {}
 
   // ================================================================
   // PORTAL WARGA — tagihan & pembayaran milik sendiri
   // ================================================================
 
-  /**
-   * OWN: hanya diri sendiri. AREA: warga di area-nya. ALL: siapa pun.
-   * Data milik sendiri selalu lolos apa pun scope-nya, supaya pengurus yang areanya
-   * beda dari rumahnya sendiri (mis. Bendahara RT 1 yang juga punya rumah di RT 3)
-   * tetap bisa melihat datanya sendiri.
-   */
+  /** OWN: diri sendiri. AREA: warga areanya. ALL: semua. Data milik sendiri selalu lolos. */
   private async assertBolehLihatUser(ctx: AccessContext, targetUserId: number) {
     if (targetUserId === ctx.user.sub) return;
     if (ctx.scope === 'ALL') return;
@@ -414,11 +411,7 @@ export class WargaService {
   // USER / WARGA CRUD — dikerjakan pengurus RT untuk warga RT-nya
   // ================================================================
 
-  /**
-   * Baca: semua penghuni di wilayahnya (termasuk pengurus yang tinggal di situ).
-   * Tulis: hanya warga biasa (level warga) di areanya. Pengurus tidak boleh diubah, dihapus,
-   * atau di-reset passwordnya oleh pengurus RT; jabatan mereka diatur admin.
-   */
+  /** Baca: semua penghuni di wilayahnya. Tulis: hanya warga biasa di areanya (pengurus diatur admin). */
   private async findWargaScoped(ctx: AccessContext, id: number, tulis = false) {
     const area = areaFilter(ctx);
     const warga = await this.prisma.user.findFirst({
@@ -583,6 +576,7 @@ export class WargaService {
     } catch (error) {
       this.handleUniqueError(error);
     }
+    this.permissions.invalidateUser(id);
     return this.findWargaScoped(ctx, id);
   }
 
@@ -619,6 +613,7 @@ export class WargaService {
       this.prisma.notifikasi.deleteMany({ where: { idUser: id } }),
       this.prisma.user.delete({ where: { id } }),
     ]);
+    this.permissions.invalidateUser(id);
     await this.audit.catat(ctx.user.sub, 'warga.hapus', {
       target: 'User',
       targetId: id,
@@ -655,12 +650,7 @@ export class WargaService {
   // RUMAH / BLOK RUMAH
   // ================================================================
 
-  /**
-   * Status hunian terpisah dari kepemilikan: rumah kosong pun sudah pasti terjual
-   * sehingga boleh tetap ada pemilik/penanggung jawab IPL (`userId`).
-   * `userId = null` hanya berarti "pemilik belum terdaftar akun", bukan "tak bertuan".
-   * Aturan: DIHUNI_* wajib ada pemilik; KOSONG boleh ada pemilik atau belum.
-   */
+  /** DIHUNI_* wajib ada pemilik; KOSONG boleh ada/tidak (userId null = pemilik belum punya akun). */
   private resolveStatus(
     userId: number | null,
     status?: StatusRumah,
@@ -844,18 +834,9 @@ export class WargaService {
     return { message: 'Rumah berhasil dihapus.' };
   }
 
-  // ================================================================
-  // REGISTRASI MANDIRI (Bagian 3) — warga daftar sendiri, masuk status Menunggu
-  // Persetujuan; pengurus RT (permission warga.approve_registrasi) yang
-  // menyetujui/menolak. Endpoint daftar & rumah-kosong bersifat publik
-  // (lihat @Public() di WargaController), sisanya butuh permission seperti biasa.
-  // ================================================================
+  // REGISTRASI MANDIRI — pendaftaran publik, disetujui pengurus RT (warga.approve_registrasi).
 
-  /**
-   * Publik: blok rumah KOSONG yang pemiliknya belum terdaftar akun
-   * (`userId null` = pemilik belum punya akun, bukan tak bertuan),
-   * untuk dropdown form register mandiri.
-   */
+  /** Publik: rumah KOSONG yang pemiliknya belum punya akun, untuk form register. */
   async getRumahKosong(rt: string) {
     if (!SEMUA_RT.includes(rt as RT)) {
       throw new BadRequestException('RT tidak valid.');

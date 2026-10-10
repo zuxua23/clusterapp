@@ -238,11 +238,7 @@ export class SetoranService {
       throw new NotFoundException(`Setoran dengan ID ${id} tidak ditemukan.`);
     assertInArea(ctx, setoran.area);
 
-    // Konteks untuk RW: tagihan yang TIDAK ikut setoran ini, dibatasi pada
-    // periode yang ada di setoran agar ringkas dan relevan —
-    // (1) rumah kosong (masuk kas RT, semua status, ber-badge),
-    // (2) pembayaran menunggu konfirmasi RT,
-    // (3) tagihan BELUM_LUNAS rumah dihuni.
+    // Konteks RW: tagihan periode yang sama yang tidak ikut setoran (rumah kosong, menunggu konfirmasi, belum lunas).
     const periodeSet = new Map(
       setoran.tagihan.map((t) => [
         `${t.tahunPeriode}-${t.bulanPeriode}`,

@@ -97,12 +97,7 @@ export class IplController {
     await this.files.kirim(res, await this.iplService.fileIdBukti(ctx, id));
   }
 
-  /**
-   * PATCH /ipl/konfirmasi/:pembayaranId — Konfirmasi atau tolak bukti pembayaran.
-   * Sengaja tanpa @RequirePermission: pemegang `ipl.konfirmasi` ATAU
-   * `ipl.konfirmasi_pengurus` boleh masuk (mis. Ketua RT cuma boleh konfirmasi
-   * pembayaran pengurus), jadi pengecekannya dilakukan di service.
-   */
+  /** PATCH /ipl/konfirmasi/:pembayaranId — butuh `ipl.konfirmasi` ATAU `ipl.konfirmasi_pengurus`, dicek di service. */
   @Patch('konfirmasi/:pembayaranId')
   konfirmasiPembayaran(
     @CurrentUser() user: AuthUser,

@@ -92,15 +92,7 @@ export class NotifikasiService implements OnApplicationBootstrap {
     return data;
   }
 
-  /**
-   * Kirim ke semua user yang role-nya punya permission `kode` di tb_Role_permission,
-   * sesuai jangkauannya:
-   *   - scope ALL  : selalu ikut
-   *   - scope AREA : hanya bila area user sama dengan `area`
-   * `area` kosong atau RW berarti berlaku untuk seluruh RW, jadi semua pemegang
-   * permission (apa pun area-nya) ikut menerima.
-   * `kecualiUserId` dipakai supaya pembuat aksi tidak menotifikasi dirinya sendiri.
-   */
+  /** Kirim ke pemegang permission `kode`: ALL selalu, AREA bila areanya cocok. Area kosong/RW = seluruh RW. */
   async kirimKePermission(
     kode: string,
     area: Area | null | undefined,
@@ -138,13 +130,7 @@ export class NotifikasiService implements OnApplicationBootstrap {
     );
   }
 
-  /**
-   * Sama seperti `kirimKePermission`, tapi `area` SELALU dicocokkan persis (termasuk saat
-   * areanya 'RW') — tanpa shortcut "RW = seluruh RW" di atas. Dipakai Pengaduan, karena
-   * pengurus RW dan pengurus RT punya `pengaduan.respon` di area masing-masing, dan
-   * notifikasi pengaduan tujuan RW TIDAK boleh ikut nyasar ke pengurus RT (beda dari
-   * Kegiatan/Pengumuman/Pengajuan yang memang "RW = pengumuman berlaku untuk semua").
-   */
+  /** Seperti `kirimKePermission` tapi area dicocokkan persis (RW bukan berarti semua) — untuk pengaduan. */
   async kirimKePermissionAreaPersis(
     kode: string,
     area: Area,

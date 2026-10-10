@@ -13,13 +13,7 @@ export interface ResolvedPeriode {
   sampaiYm: string;
 }
 
-/**
- * Expand ?dari=YYYY-MM&sampai=YYYY-MM menjadi daftar periode bulanan.
- * - Satu sisi saja boleh (dianggap satu bulan).
- * - Sisi terbalik otomatis ditukar.
- * - Maksimal 12 bulan.
- * - Tanpa param sama sekali → null (tanpa filter).
- */
+/** ?dari=YYYY-MM&sampai=YYYY-MM -> daftar periode (maks 12 bulan, sisi terbalik ditukar, tanpa param = null). */
 export function resolvePeriode(
   dari?: string,
   sampai?: string,

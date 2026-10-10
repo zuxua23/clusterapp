@@ -2,12 +2,7 @@
 
 import { useRef } from "react";
 
-/**
- * Input angka nominal yang otomatis dikasih titik ribuan saat diketik (format id-ID),
- * dipakai seragam di semua form nominal (bukan native type="number" yang polos).
- * `value`/`onChange` tetap string angka mentah tanpa titik, jadi logika parent
- * (Number(form.nominal), validasi, dsb) tidak perlu berubah.
- */
+/** Input nominal dengan titik ribuan; `value`/`onChange` tetap string angka mentah. */
 export default function CurrencyInput({ value, onChange, className = "ipl-input", ...rest }) {
   const inputRef = useRef(null);
 

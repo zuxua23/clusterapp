@@ -1,11 +1,7 @@
 import { Area } from '@prisma/client';
 import { AccessContext } from '../auth/auth.types';
 
-/**
- * Kegiatan & pengumuman default milik RT pembuatnya. Yang boleh dilihat user:
- *   - scope ALL  : semuanya (pengurus RW, admin)
- *   - selain itu : milik area-nya + konten level RW + konten RT yang sudah di-ACC RW
- */
+/** Scope ALL lihat semua; selain itu: area sendiri + konten RW + konten RT yang sudah di-ACC RW. */
 export function visibilitasWhere(ctx: AccessContext) {
   if (ctx.scope === 'ALL') return {};
   const or: Array<Record<string, unknown>> = [
@@ -16,13 +12,7 @@ export function visibilitasWhere(ctx: AccessContext) {
   return { OR: or };
 }
 
-/**
- * Khusus halaman kelola (findAll admin/pengurus) — beda dari visibilitasWhere di atas.
- * Pengurus RT hanya mengelola kontennya SENDIRI (area-nya), titik — walau sudah di-ACC
- * RW (DISETUJUI) atau sedang diajukan (DIAJUKAN), tetap muncul karena memang masih
- * miliknya; konten RT/RW lain (termasuk yang sudah tampil ke semua warga) tidak perlu
- * ikut nongol di sini karena bukan yang dia kelola. Scope ALL (RW/admin) tetap lihat semua.
- */
+/** Halaman kelola: pengurus hanya melihat konten area sendiri; scope ALL melihat semua. */
 export function visibilitasKelolaWhere(ctx: AccessContext) {
   if (ctx.scope === 'ALL') return {};
   return { area: ctx.user.area ?? 'RW' };

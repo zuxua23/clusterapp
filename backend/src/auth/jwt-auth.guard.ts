@@ -8,7 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from './public.decorator';
-import { PrismaService } from '../prisma/prisma.service';
+import { PermissionsService } from './permissions.service';
 import { AuthedRequest } from './auth.types';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly reflector: Reflector,
-    private readonly prisma: PrismaService,
+    private readonly permissions: PermissionsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -42,38 +42,18 @@ export class JwtAuthGuard implements CanActivate {
       );
     }
 
-    // Role dan area dibaca dari DB tiap request, bukan dari token, supaya
-    // perubahan jabatan oleh admin langsung berlaku tanpa menunggu token habis.
-    const user = await this.prisma.user.findUnique({
-      where: { id: sub },
-      select: {
-        id: true,
-        username: true,
-        namaUser: true,
-        area: true,
-        roleId: true,
-        role: { select: { kode: true } },
-      },
-    });
+    // Role & area dibaca dari DB (di-cache singkat), bukan dari token, supaya
+    // perubahan jabatan oleh admin cepat berlaku.
+    const user = await this.permissions.userById(sub);
     if (!user) {
       throw new UnauthorizedException('Akun tidak ditemukan.');
     }
-
-    request.user = {
-      sub: user.id,
-      username: user.username,
-      nama: user.namaUser,
-      role: user.role.kode,
-      roleId: user.roleId,
-      area: user.area,
-    };
+    request.user = user;
     return true;
   }
 
   private extractToken(request: Request): string | undefined {
-    const authHeader = request.headers.authorization;
-    if (!authHeader) return undefined;
-    const [type, token] = authHeader.split(' ');
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }
 }

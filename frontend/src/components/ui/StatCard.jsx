@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 
-/**
- * Kartu KPI compact shared (acuan: card halaman Keuangan).
- *
- * - Seluruh card adalah link ke `href` (render <div> bila href kosong).
- * - Struktur identik di semua tone: ikon + label + nilai + 1 baris sub-teks,
- *   sehingga tinggi card selalu sama.
- * - `progress` (0–100) → strip absolute di dasar card; `null` → disembunyikan.
- */
+/** Kartu KPI: link bila ada `href`; `progress` (0–100) tampil sebagai strip di dasar card. */
 export default function StatCard({
   tone = "teal",
   icon,

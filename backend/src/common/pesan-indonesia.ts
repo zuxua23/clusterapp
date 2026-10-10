@@ -10,11 +10,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 
-/**
- * Seluruh pesan error yang sampai ke warga harus berbahasa Indonesia. Pesan buatan
- * aplikasi sudah Indonesia; file ini menerjemahkan yang berasal dari pustaka
- * (class-validator, NestJS, multer) yang bawaannya berbahasa Inggris.
- */
+/** Terjemahkan pesan error bawaan pustaka (class-validator, NestJS, multer) ke Bahasa Indonesia. */
 
 // Nama field (camelCase di DTO) -> nama yang wajar dibaca pengguna
 const LABEL: Record<string, string> = {

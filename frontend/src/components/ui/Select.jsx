@@ -20,17 +20,7 @@ function useIsMobile() {
   return mobile;
 }
 
-/**
- * Dropdown custom pengganti <select> native.
- *
- * - Desktop: listbox di-render lewat portal ke <body> (position: fixed mengikuti
- *   trigger + auto flip ke atas kalau mentok bawah layar), jadi tidak kepotong
- *   container ber-overflow (popover filter, modal, dll).
- * - Mobile + prop expandOnMobile: opsi di-render inline sebagai radio list
- *   (tanpa dropdown-dalam-dropdown), cocok untuk bottom sheet.
- *
- * options: [{ value, label }]
- */
+/** Dropdown custom: desktop lewat portal (tidak kepotong overflow), mobile + expandOnMobile jadi radio list inline. */
 export default function Select({
   id,
   name,

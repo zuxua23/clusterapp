@@ -56,12 +56,7 @@ export class PengaduanController {
     return this.pengaduanService.findByUser(ctx, userId);
   }
 
-  /**
-   * GET /pengaduan/tujuan — pilihan tujuan (RW/RT) untuk form buat pengaduan, mengikuti
-   * rumah & jabatan pelapor. Tanpa @RequirePermission: cukup login, karena hasilnya aman
-   * berupa daftar kosong untuk akun yang memang tidak punya izin membuat pengaduan.
-   * Harus didaftarkan sebelum @Get(':id') supaya "tujuan" tidak ketangkep sebagai :id.
-   */
+  /** GET /pengaduan/tujuan — pilihan tujuan form pengaduan. Harus di atas @Get(':id'). */
   @Get('tujuan')
   getTujuanPilihan(@CurrentUser() user: AuthUser) {
     return this.pengaduanService.getTujuanPilihan(user);

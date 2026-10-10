@@ -3,13 +3,7 @@ import { Area, Prisma, RT } from '@prisma/client';
 import { AccessContext } from '../auth/auth.types';
 import { LEVEL_ADMIN } from './helpers';
 
-/**
- * Terjemahkan scope permission jadi filter area.
- *   null  -> tidak dibatasi (scope ALL)
- *   Area  -> hanya data area itu (scope AREA)
- * Scope OWN bukan urusan area; pemanggil yang mendukung OWN harus menanganinya
- * sebelum memanggil helper ini.
- */
+/** Scope -> filter area: null = tanpa batas (ALL), Area = area itu (AREA). OWN ditangani pemanggil. */
 export function areaFilter(ctx: AccessContext): Area | null {
   if (ctx.scope === 'ALL') return null;
   if (ctx.scope === 'AREA') {
@@ -43,11 +37,7 @@ export function isRtArea(area: Area | null | undefined): area is RT {
   return !!area && area !== 'RW';
 }
 
-/**
- * Penghuni yang boleh DILIHAT di data warga: semua akun selain admin. Pengurus juga
- * penghuni, jadi ikut tampil di RT tempat rumahnya berada (mis. Ketua RW yang tinggal di RT 1
- * terlihat oleh pengurus RT 1). Melihat tidak berarti boleh mengubah; lihat `wargaTulisWhere`.
- */
+/** Penghuni yang boleh dilihat (semua selain admin, termasuk pengurus). Hak ubah: `wargaTulisWhere`. */
 export function wargaBacaWhere(area: Area | null): Prisma.UserWhereInput {
   const bukanAdmin: Prisma.UserWhereInput = {
     role: { level: { gt: LEVEL_ADMIN } },

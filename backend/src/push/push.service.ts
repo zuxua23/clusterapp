@@ -9,6 +9,8 @@ export interface PushPayload {
   url?: string | null;
 }
 
+const PUSH_BATCH = 50;
+
 @Injectable()
 export class PushService {
   private readonly logger = new Logger(PushService.name);
@@ -56,18 +58,11 @@ export class PushService {
     return { message: 'Notifikasi push dimatikan.' };
   }
 
-  /** Kirim push ke satu user (semua device/subscription miliknya). Tidak pernah throw —
-   * dipanggil fire-and-forget dari NotifikasiService supaya gagal kirim push tidak
-   * mengganggu alur utama (pembuatan notifikasi in-app). */
-  async kirimKeUser(idUser: number, payload: PushPayload) {
-    return this.kirimKeBanyak([idUser], payload);
-  }
-
   async kirimKeBanyak(idUserList: number[], payload: PushPayload) {
     if (!process.env.VAPID_PRIVATE_KEY || idUserList.length === 0) return;
-    const unique = [...new Set(idUserList)];
     const subs = await this.prisma.pushSubscription.findMany({
-      where: { idUser: { in: unique } },
+      where: { idUser: { in: [...new Set(idUserList)] } },
+      select: { id: true, endpoint: true, p256dh: true, auth: true },
     });
     if (subs.length === 0) return;
 
@@ -77,6 +72,16 @@ export class PushService {
       url: payload.url ?? '/',
     });
 
+    // Dikirim bertahap supaya broadcast ke ratusan warga tidak membuka ratusan koneksi sekaligus.
+    for (let i = 0; i < subs.length; i += PUSH_BATCH) {
+      await this.kirimBatch(subs.slice(i, i + PUSH_BATCH), body);
+    }
+  }
+
+  private async kirimBatch(
+    subs: { id: number; endpoint: string; p256dh: string; auth: string }[],
+    body: string,
+  ) {
     await Promise.allSettled(
       subs.map(async (sub) => {
         try {

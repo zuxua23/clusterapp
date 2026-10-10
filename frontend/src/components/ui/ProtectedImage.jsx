@@ -4,15 +4,7 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { getToken } from "@/lib/session";
 
-/**
- * Gambar dari endpoint terautentikasi (mis. bukti transfer IPL/setoran/kas).
- * `<img src>` biasa tidak bisa membawa header Authorization, jadi filenya
- * diambil sebagai blob lalu ditampilkan lewat object URL.
- * Klik thumbnail membuka lightbox di tab yang sama (tanpa tab baru).
- * Props:
- * - trigger({ open, src }): render kustom tombol pembuka (opsional).
- * - fullscreen: overlay lightbox full-screen dengan pinch-zoom (untuk mobile).
- */
+/** Gambar dari endpoint ber-auth, diambil sebagai blob karena <img src> tidak bisa kirim header Authorization. */
 export default function ProtectedImage({ path, alt, className, emptyText = "Tidak ada file bukti.", trigger, fullscreen = false }) {
   const [objectUrl, setObjectUrl] = useState(null);
   const [error, setError] = useState(false);

@@ -18,11 +18,7 @@ const EMPTY_FORM = {
   password: "",
 };
 
-/**
- * Tambah / ubah warga. Saat tambah, akun dibuatkan sekalian (registrasi mandiri sudah
- * dihapus): login pakai username (default no HP) dan password sementara dari pengurus RT.
- * `allowedRts` membatasi RT yang boleh dipilih; `rumahKosong` untuk saran blok.
- */
+/** Tambah/ubah warga; saat tambah, akun dibuat dengan password sementara dari pengurus RT. */
 export default function WargaFormModal({
   open,
   mode = "create",

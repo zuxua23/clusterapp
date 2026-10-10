@@ -57,14 +57,7 @@ export class PengaduanService implements OnApplicationBootstrap {
     );
   }
 
-  /**
-   * Visibilitas pengaduan sesuai scope:
-   *   OWN  : pengaduan milik sendiri.
-   *   AREA (RW)   : tujuan RW, atau yang sudah diteruskan ke RW, atau milik sendiri.
-   *   AREA (RT_x) : tujuan RT itu, atau milik sendiri.
-   *   ALL  : tanpa batasan (role bikinan admin).
-   * Pelapor selalu bisa melihat pengaduannya sendiri lewat klausa `idUser`, apa pun tujuannya.
-   */
+  /** OWN: milik sendiri. AREA RW: tujuan/diteruskan ke RW. AREA RT: tujuan RT itu. ALL: semua. Milik sendiri selalu terlihat. */
   private scopeWhere(ctx: AccessContext): Prisma.PengaduanWhereInput {
     if (ctx.scope === 'OWN') return { idUser: ctx.user.sub };
     const area = areaFilter(ctx);
@@ -243,11 +236,7 @@ export class PengaduanService implements OnApplicationBootstrap {
     return { message: 'Tanggapan berhasil disimpan', data };
   }
 
-  // ================================================================
-  // AUTO-TERUSKAN — pengaduan RT yang tidak ditanggapi 7 hari diteruskan ke RW.
-  // Idempotent: hanya memproses baris `diteruskanAt IS NULL`, jadi aman dipanggil
-  // ulang (dijadwalkan harian + sekali saat start, lihat onApplicationBootstrap).
-  // ================================================================
+  // AUTO-TERUSKAN — pengaduan RT tanpa tanggapan 7 hari diteruskan ke RW (idempotent).
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async teruskanOtomatis() {
     const batas = new Date();

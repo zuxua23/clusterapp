@@ -1,11 +1,7 @@
 import { IsEnum, IsOptional } from 'class-validator';
 import { StatusRumah } from '@prisma/client';
 
-/**
- * Status hunian awal saat pendaftaran disetujui. Rumah kosong yang pemiliknya
- * mendaftar untuk rumahnya sendiri tetap KOSONG (tidak dihuni, tapi ditagih IPL
- * dan masuk kas RT). Pilih DIHUNI_* bila pendaftar langsung menempati rumah.
- */
+/** Status hunian awal saat pendaftaran disetujui (KOSONG tetap ditagih IPL, masuk kas RT). */
 export class SetujuiPendaftaranDto {
   @IsOptional()
   @IsEnum(StatusRumah)

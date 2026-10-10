@@ -1,11 +1,7 @@
 const TOKEN_KEY = "accessToken";
 const USER_KEY = "user";
 
-// App terinstall (PWA "Add to Home Screen"/"Install") dijalankan di jendela standalone
-// tanpa chrome browser. sessionStorage di situ ikut mati tiap Android membunuh proses
-// app di background — pengguna jadi otomatis ter-logout tiap buka app lagi, padahal
-// app yang sudah diinstall di HP pribadi itu wajar selalu "diingat" (sama kayak app
-// native lain). Jadi sesi WAJIB localStorage di mode ini, apapun pilihan "Ingat saya".
+// Di PWA terinstall, sessionStorage hilang tiap Android mematikan app, jadi sesi wajib localStorage.
 function isStandalonePwa() {
   if (typeof window === "undefined") return false;
   return (
@@ -14,12 +10,7 @@ function isStandalonePwa() {
   );
 }
 
-// Sesi yang kesimpen di sessionStorage SEBELUM fix standalone-PWA di atas ada (atau sempat
-// gagal kedetek standalone pas login) tidak otomatis pindah ke localStorage — baru pindah
-// kalau ada pemicu lain (mis. authApi.me() refresh). Kalau di antara login dan pemicu itu
-// Android keburu bunuh proses app (biasa kejadian pas user mondar-mandir pencet back),
-// sessionStorage-nya ilang duluan dan user ke-logout padahal sudah "seharusnya" localStorage.
-// Jadi tiap baca sesi di mode standalone, langsung pindahkan paksa — jangan nunggu dipicu apa pun.
+// Sesi lama di sessionStorage dipindah ke localStorage tiap dibaca dalam mode standalone.
 function migrasiKeLocalStorageJikaStandalone() {
   if (!isStandalonePwa()) return;
   const token = sessionStorage.getItem(TOKEN_KEY);

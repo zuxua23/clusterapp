@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, Bell, CheckCheck, Inbox, KeyRound, Download } from "lucide-react";
 import { notifikasiApi } from "@/lib/api";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 import { areaLabel } from "@/lib/session";
 import { pageTitle } from "@/lib/nav";
 import { useUser } from "@/lib/useUser";
@@ -61,17 +62,13 @@ export default function Header({ onMenuClick }) {
     setInstallPrompt(null); // event cuma bisa dipakai sekali
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = () => {
-      notifikasiApi.getAll()
-        .then((data) => { if (!cancelled) setNotifications(data || []); })
-        .catch(() => {});
-    };
-    load();
-    const interval = setInterval(load, POLL_INTERVAL_MS);
-    return () => { cancelled = true; clearInterval(interval); };
-  }, []);
+  const loadNotif = () => {
+    notifikasiApi.getAll()
+      .then((data) => setNotifications(data || []))
+      .catch(() => {});
+  };
+  useEffect(loadNotif, []);
+  useAutoRefresh(loadNotif, POLL_INTERVAL_MS);
 
   useEffect(() => {
     if (!isPanelOpen) return;

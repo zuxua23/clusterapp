@@ -40,12 +40,8 @@ export function formatRupiahShort(n) {
   return `${neg ? "-" : ""}Rp ${s}`;
 }
 
-// ── Nama bulan ──────────────────────────────────────────────────────────────
-// PENTING: jangan turunkan array dari object ber-key "01".."12" via
-// Object.values()/entries() — key "10","11","12" selalu diurutkan JS secara
-// numerik duluan sehingga hasilnya mulai dari Oktober (pernah bikin semua label
-// bulan mundur 3 bulan pasca-merge). Array MONTHS di bawah adalah sumber
-// kebenaran urutan; peta & opsi dibangun darinya.
+// Jangan ambil urutan bulan dari Object.values() objek ber-key "01".."12" — JS mengurutkan
+// key numerik sehingga mulai dari Oktober. MONTHS adalah sumber urutan.
 /** Urutan Januari..Desember (index 0 = Januari). Dipakai semua label bulan. */
 export const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",

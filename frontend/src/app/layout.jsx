@@ -26,11 +26,7 @@ export const metadata = {
   },
 };
 
-// maximumScale 1 + userScalable false mematikan pinch-zoom/double-tap-zoom di seluruh
-// halaman supaya app terasa seperti app native, bukan tab browser. Zoom foto bukti
-// pembayaran tetap jalan karena pakai touch-action: pinch-zoom per-elemen (lihat
-// .protected-lightbox-overlay.is-fullscreen di globals.css), yang didukung browser
-// modern meski viewport-nya sendiri mengunci skala.
+// Zoom halaman dimatikan biar terasa native; lightbox foto tetap bisa pinch-zoom lewat touch-action.
 export const viewport = {
   themeColor: "#0d9488",
   width: "device-width",

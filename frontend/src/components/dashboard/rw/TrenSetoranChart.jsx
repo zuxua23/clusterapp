@@ -3,11 +3,7 @@
 import { TrendingUp } from "lucide-react";
 import { formatRupiah } from "./format";
 
-/**
- * Grafik setoran IPL ke RW — desain disamakan dengan chart dashboard
- * Bendahara RT (db-chart-*): header ikon + bars + legend nominal.
- * Jumlah bar mengikuti range terpilih (default 1 bar bulan berjalan).
- */
+/** Grafik setoran IPL ke RW; jumlah bar mengikuti range terpilih. */
 export default function TrenSetoranChart({ tren, periodeLabel }) {
   if (!tren || tren.length === 0) return null;
   const max = Math.max(...tren.map((t) => t.diterima), 1);

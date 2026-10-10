@@ -17,11 +17,7 @@ export const AKSI_AUDIT = [
   'warga.reset_password',
 ] as const;
 
-/**
- * GET /audit — riwayat aktivitas sensitif (append-only, hanya-baca).
- * Dipakai pimpinan RW memeriksa siapa mengubah apa: flip status rumah,
- * koreksi nominal, generate, konfirmasi, dan setoran.
- */
+/** GET /audit — riwayat aktivitas sensitif (hanya-baca). */
 @Controller('audit')
 export class AuditController {
   constructor(private prisma: PrismaService) {}

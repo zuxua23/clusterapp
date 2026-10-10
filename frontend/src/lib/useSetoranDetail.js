@@ -27,11 +27,7 @@ function labelPeriode(tahun, bulan) {
   return `${SD_BULAN[Number(bulan) - 1] || bulan} ${tahun}`;
 }
 
-/**
- * State + logic modal Detail Setoran. Sengaja dipisah dari view agar state
- * (mode tolak, isi textarea) tidak hilang saat rotate/resize menukar
- * tampilan desktop <-> mobile.
- */
+/** State modal Detail Setoran, dipisah dari view supaya tidak hilang saat tampilan desktop/mobile bertukar. */
 export function useSetoranDetail(id, { onSuccess, onClose } = {}) {
   const [data, setData] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(true);

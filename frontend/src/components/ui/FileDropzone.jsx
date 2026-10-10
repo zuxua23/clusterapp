@@ -3,14 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Upload, Image as ImageIcon, FileText, Trash2 } from "lucide-react";
 
-/**
- * Dropzone file upload seragam — dipakai di semua form yang butuh upload file
- * (foto bukti, gambar kegiatan, file pengumuman/notulen, dll) biar tampilannya
- * konsisten di seluruh app, bukan beda-beda tiap form.
- *
- * Gambar ditampilkan sebagai preview; file lain (PDF/DOC) ditampilkan sebagai
- * badge ikon + nama file.
- */
+/** Dropzone upload seragam: gambar tampil sebagai preview, file lain sebagai ikon + nama. */
 export default function FileDropzone({
   file,
   onFileSelect,

@@ -32,11 +32,7 @@ import { formatTanggalPanjang as formatDate } from "@/lib/format";
 
 const PAGE_SIZE = 10;
 
-/**
- * Halaman kelola kegiatan / pengumuman. Keduanya berbagi alur yang sama:
- * milik RT pembuatnya, diajukan sekre RT ke RW, di-ACC ketua/sekre RW.
- * Tombol yang tampil mengikuti permission user (dari tabel role-permission).
- */
+/** Kelola kegiatan/pengumuman: dibuat RT, diajukan ke RW, di-ACC RW. Tombol mengikuti permission. */
 export default function PublikasiManager({
   menu, // "kegiatan" | "pengumuman"
   title,

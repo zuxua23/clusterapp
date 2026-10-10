@@ -68,12 +68,7 @@ export interface AutoKasRow {
   locked: boolean;
 }
 
-/**
- * Urutkan ASCENDING by tanggal (oldest → newest) lalu hitung saldo berjalan:
- * saldo = saldoSebelumnya + masuk - keluar, mulai dari saldoAwal (default 0).
- * Tanggal yang SAMA dengan baris sebelumnya di-suppress (string kosong) agar
- * tabel lebih ringkas; kolom lain tetap diisi normal.
- */
+/** Urut tanggal naik + saldo berjalan dari saldoAwal; tanggal sama dengan baris sebelumnya dikosongkan. */
 export function hitungSaldoBerjalan(rows: KasExportInput[], saldoAwal = 0) {
   const sorted = [...rows].sort((a, b) => {
     const diff = new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime();
@@ -148,12 +143,7 @@ export class KeuanganService {
     private files: FileService,
   ) {}
 
-  /**
-   * Area yang datanya ikut dihitung/ditampilkan oleh user ini.
-   * Isolasi kas per wilayah: pengurus (RT maupun RW) hanya melihat kas areanya
-   * sendiri; parameter pilih dari klien diabaikan. Hanya admin (area null)
-   * yang boleh melihat semua wilayah / memfilter wilayah.
-   */
+  /** Pengurus hanya melihat kas areanya sendiri; hanya admin (area null) yang boleh pilih wilayah. */
   private areasFor(ctx: AccessContext, pilih?: string): Area[] {
     if (ctx.user.area) return [ctx.user.area];
     const area = areaFilter(ctx);
@@ -340,12 +330,7 @@ export class KeuanganService {
       }
     }
 
-    // Setor IPL: per RT per periode tagihan (wilayah hanya RT), 1 row per RT+bulan.
-    // Setoran adalah pemasukan RW — baris ini hanya dibangun bila scope mencakup RW,
-    // sehingga user RT tidak melihatnya di riwayat (porsi yang belum dikonfirmasi
-    // tetap terpantau lewat titipanIpl di ringkasan + menu Setoran).
-    // Jika 1 setoran berisi multi-periode, akan jadi multi-row (per periode).
-    // Jika 2 setoran same RT same periode, nominal dijumlah (update).
+    // Setor IPL = pemasukan RW: 1 baris per RT+periode, hanya bila scope mencakup RW.
     const needSetor =
       isPemasukanFilter &&
       (!kategori || kategori === 'SEMUA' || kategoriIsSetorIpl);
@@ -720,25 +705,26 @@ export class KeuanganService {
           );
         const nominalPerTagihan = Math.floor(Number(dto.nominal) / rows.length);
         let sisa = Number(dto.nominal) - nominalPerTagihan * rows.length;
+        // Kelompokkan per (kosong, nominal) supaya cukup beberapa updateMany, bukan 1 query per tagihan.
+        const kelompok = new Map<string, number[]>();
         for (const r of rows) {
-          const add = sisa > 0 ? 1 : 0;
-          if (add) sisa--;
-          const perTagihan = nominalPerTagihan + add;
-          // Rumah kosong: porsinya sudah menyatu sebagai kas RT sehingga
-          // split IPL/Kas tidak bermakna — normalisasi ke Kas semua agar
-          // totalnya tetap pas.
-          if (r.rumah.status === 'KOSONG') {
-            await this.prisma.ipl.update({
-              where: { id: r.id },
-              data: { nominalIpl: 0, nominalKas: perTagihan },
-            });
-          } else {
-            await this.prisma.ipl.update({
-              where: { id: r.id },
-              data: { nominalKas: perTagihan },
-            });
-          }
+          const perTagihan = nominalPerTagihan + (sisa-- > 0 ? 1 : 0);
+          const key = `${r.rumah.status === 'KOSONG' ? 1 : 0}|${perTagihan}`;
+          kelompok.set(key, [...(kelompok.get(key) ?? []), r.id]);
         }
+        // Rumah kosong: porsinya menyatu sebagai kas RT, jadi IPL-nya dinolkan.
+        await this.prisma.$transaction(
+          [...kelompok].map(([key, ids]) => {
+            const [kosong, nominal] = key.split('|');
+            return this.prisma.ipl.updateMany({
+              where: { id: { in: ids } },
+              data:
+                kosong === '1'
+                  ? { nominalIpl: 0, nominalKas: Number(nominal) }
+                  : { nominalKas: Number(nominal) },
+            });
+          }),
+        );
       }
       return {
         message: `Pemasukan Kas RT ${rt} periode ${bulan}/${tahun} berhasil diperbarui.`,
@@ -792,16 +778,17 @@ export class KeuanganService {
         statusPembayaran: 'LUNAS',
         bulanPeriode: bulan,
         tahunPeriode: tahun,
-        rumah: { rt },
       } as const;
-      await this.prisma.ipl.updateMany({
-        where: { ...base, rumah: { rt, status: { not: 'KOSONG' } } },
-        data: { nominalKas: 0 },
-      });
-      await this.prisma.ipl.updateMany({
-        where: { ...base, rumah: { rt, status: 'KOSONG' } },
-        data: { nominalIpl: 0, nominalKas: 0 },
-      });
+      await this.prisma.$transaction([
+        this.prisma.ipl.updateMany({
+          where: { ...base, rumah: { rt, status: { not: 'KOSONG' } } },
+          data: { nominalKas: 0 },
+        }),
+        this.prisma.ipl.updateMany({
+          where: { ...base, rumah: { rt, status: 'KOSONG' } },
+          data: { nominalIpl: 0, nominalKas: 0 },
+        }),
+      ]);
       return {
         message: `Pemasukan Kas RT ${rt} periode ${bulan}/${tahun} berhasil dihapus (kontribusi kas di-nol-kan).`,
       };
@@ -816,14 +803,8 @@ export class KeuanganService {
     return { message: 'Transaksi kas berhasil dihapus.' };
   }
 
-  // ================================================================
-  // RINGKASAN
-  //   Pemasukan otomatis (tidak disimpan di trx_kas):
-  //     RT -> nominalKas dari tagihan LUNAS di RT itu
-  //     RW -> totalIpl dari setoran RT yang sudah DIKONFIRMASI
-  //   + kas manual per area. Porsi IPL yang sudah lunas tapi belum
-  //   dikonfirmasi RW dilaporkan terpisah sebagai `titipanIpl`.
-  // ================================================================
+  // RINGKASAN — pemasukan otomatis: RT = nominalKas tagihan LUNAS, RW = setoran DIKONFIRMASI.
+  // IPL lunas yang belum dikonfirmasi RW dilaporkan sebagai `titipanIpl`.
 
   async getRingkasan(
     ctx: AccessContext,
@@ -847,11 +828,7 @@ export class KeuanganService {
     const tanpaRw = { id: { in: [] as number[] } };
     const rtSaja = { rumah: { rt: { in: rtDipilih } } };
 
-    // Untuk Setor IPL wilayah hanya RT: tentukan RT yang visible untuk setor.
-    // Setoran adalah pemasukan RW, bukan RT — hanya dihitung bila scope mencakup RW.
-    // Scope RT murni (areas = [RT_x]) mendapat setorRtList kosong: ringkasannya
-    // hanya kas RT + manual, dan porsi IPL yang belum dikonfirmasi tetap
-    // dilaporkan terpisah sebagai titipanIpl.
+    // Setoran = pemasukan RW; scope RT murni mendapat setorRtList kosong.
     let setorRtList: RT[] = [];
     const filterAreaIsRt =
       params?.area &&
